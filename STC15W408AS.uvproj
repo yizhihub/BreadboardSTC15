@@ -149,7 +149,7 @@
             <RestoreSysVw>1</RestoreSysVw>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>10</TargetSelection>
+          <TargetSelection>9</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -177,7 +177,7 @@
           </Flash1>
           <bUseTDR>0</bUseTDR>
           <Flash2></Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -207,7 +207,7 @@
             <useCB>0</useCB>
             <useXB>0</useXB>
             <useL251>1</useL251>
-            <useA251>1</useA251>
+            <useA251>0</useA251>
             <Mx51>0</Mx51>
             <ModC812>0</ModC812>
             <ModCont>0</ModCont>
@@ -411,6 +411,11 @@
               <FileType>5</FileType>
               <FilePath>.\Source\bKEY.h</FilePath>
             </File>
+            <File>
+              <FileName>bSHT3x.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Source\bSHT3x.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -435,6 +440,21 @@
               <FileName>uart.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Source\Component\uart.h</FilePath>
+            </File>
+            <File>
+              <FileName>adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Source\Component\adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>IIC.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Source\Component\IIC.c</FilePath>
+            </File>
+            <File>
+              <FileName>IIC.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Source\Component\IIC.h</FilePath>
             </File>
           </Files>
         </Group>

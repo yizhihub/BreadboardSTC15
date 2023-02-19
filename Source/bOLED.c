@@ -7,8 +7,8 @@
 #define XLevel		((XLevelH&0x0F)*16+XLevelL)
 #define Max_Column	128
 #define Max_Row		64
-#define Landscope   0xa0     // Set SEG/Column Mapping       0xa0左右反置 0xa1正常
-#define Verticall   0xc0     // Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
+#define Landscope   0xa1     // Set SEG/Column Mapping       0xa0左右反置 0xa1正常
+#define Verticall   0xc8     // Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
 #define	Brightness	0x80 
 #define X_WIDTH 128
 #define Y_WIDTH 64
@@ -29,7 +29,7 @@
 //#define FEATURE_F6x8
 #define FEATURE_F8x16
 //#define FEATURE_F16x32
-#define FEATURE_HANZI
+//#define FEATURE_HANZI
 //#define FEATURE_BMP
 
 
@@ -1080,7 +1080,8 @@ void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUni
     default :
         break;   
     }
-    while(x < (x_start + 64)) {
+    x_start = (x_start + 64) > 127 ? 127 : (x_start + 64);
+    while(x < (x_start)) {
         OLED_P8x16Char(x,y,' '); x+=8;
     }
         

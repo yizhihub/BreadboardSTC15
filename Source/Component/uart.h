@@ -22,6 +22,10 @@ typedef enum UART_yizhi
 extern volatile uchar GbUartBusyFlg;
 extern uint8_t xdata GucUartTxBuf[20];
 
+extern short            Gq15ReportData[4];
+extern unsigned char    GucThrotSize[2];                              // max support 4 throttle cmd
+extern short            Gq15ThrotCmd[2]; // _at_ 0x014A;
+extern unsigned char    GbReportFlg, GbSetupScopeSent;
 
 void UART1_Init(Timer_e timer_sel); 
 void UART2_Init(void);

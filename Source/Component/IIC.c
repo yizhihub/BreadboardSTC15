@@ -11,14 +11,14 @@ void delayus()               //  k<5:  used 4 us @ 12.0000MHz
    ;
 }
 
-void iic_init()
+void i2cInit()
 {
 	 sda=1;
 	delayus();
 	 scl=1;
 	 delayus();
 }
-void iic_start(void)
+void i2cStart(void)
 {
 	 sda=1;
 	 scl=1;
@@ -27,7 +27,7 @@ void iic_start(void)
 	 delayus();
 	 scl=0;   // 已经提前将scl电平拉低
 }
-void iic_stop(void)
+void i2cStop(void)
 {
 	sda=0;
 	scl=1;
@@ -36,17 +36,22 @@ void iic_stop(void)
 	delayus();
 }
 
-void iic_respons(void)   // 器件应答主机
+uchar i2cRespons(void)   // 器件应答主机      FebA by yizhi 2023
 {
 	unsigned int i=0;
 	sda=1;     // master现将sda拉高，// 
 	delayus();// 等待slave产生应答信号
 	scl=1;
 	delayus();
-	while(sda&&(i<1000))  i++;
-	scl=0; 
+	while(sda) 
+    {
+        if (i++ > 1000)
+            return 1;
+    }
+	scl=0;
+    return 0;
 }
-void iic_answer(uchar ans) // 主机应答期间， 1 应答 0 不应答
+void i2cAnswer(uchar ans) // 主机应答期间， 1 应答 0 不应答
 {
 	 if(ans==1)
 	 {
@@ -65,7 +70,7 @@ void iic_answer(uchar ans) // 主机应答期间， 1 应答 0 不应答
 	 
 	 
 
-void IIC_WriteByte(uchar dat)
+void i2cWriteByte(uchar dat)
 {
 	uchar i,temp;
 	temp=dat;
@@ -83,7 +88,7 @@ void IIC_WriteByte(uchar dat)
 	  delayus();
 	}
 }
-uchar IIC_ReadByte(void)
+uchar i2cReadByte(void)
 {
 	uchar temp,i;
 	sda=1;
@@ -108,16 +113,16 @@ input:  ad: machine address
 output: none;
 author: yizhi
 ******************************************************/
-void IIC_Write1(uchar ad,uchar add,uchar dat)
+void IIC_WriteChar(uchar ad,uchar add,uchar dat)
 {
-	iic_start();
-	IIC_WriteByte(ad);    // 0x3c HMC5883L   0xD0 MPU6050 
-	iic_respons();
-	IIC_WriteByte(add);
-	iic_respons();
-	IIC_WriteByte(dat);
-	iic_respons();
-	iic_stop();
+	i2cStart();
+	i2cWriteByte(ad);    // 0x3c HMC5883L   0xD0 MPU6050 
+	i2cRespons();
+	i2cWriteByte(add);
+	i2cRespons();
+	i2cWriteByte(dat);
+	i2cRespons();
+	i2cStop();
 	
 }
 /****************************************************
@@ -127,17 +132,17 @@ input:  ad: machine address
 output: the readed data;
 author: yizhi
 ******************************************************/
-uchar IIC_read1(uchar ad,uchar add)
+uchar IIC_ReadChar(uchar ad,uchar add)
 {
 	  
-	  iic_start();
-	  IIC_WriteByte(ad);
-	  iic_respons();
-	  IIC_WriteByte(add);
-	  iic_respons();
-	  iic_start();
-	  IIC_WriteByte(ad+0x01); // 先读后写
-	  iic_respons();
-	  return IIC_ReadByte();
+	  i2cStart();
+	  i2cWriteByte(ad);
+	  i2cRespons();
+	  i2cWriteByte(add);
+	  i2cRespons();
+	  i2cStart();
+	  i2cWriteByte(ad+0x01); // 先读后写
+	  i2cRespons();
+	  return i2cReadByte();
 	
 }

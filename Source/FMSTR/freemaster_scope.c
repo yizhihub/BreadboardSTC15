@@ -109,10 +109,10 @@ FMSTR_BPTR FMSTR_SetUpScope(FMSTR_BPTR pMessageIO)
     return pResponse;
 }
 
-unsigned char    GucThrotSize[2];                              // max support 4 throttle cmd
-short            Gq15ThrotCmd[2]; // _at_ 0x014A;
-short            Gq15ReportData[4];
-unsigned char    GbReportFlg = 0, GbSetupScopeSent = 0;
+extern short            Gq15ReportData[4];
+extern unsigned char    GucThrotSize[2];                              // max support 4 throttle cmd
+extern short            Gq15ThrotCmd[2]; // _at_ 0x014A;
+extern unsigned char    GbReportFlg, GbSetupScopeSent;
 
 FMSTR_BPTR FMSTR_SetThrot(FMSTR_BPTR pMessageIO)
 {

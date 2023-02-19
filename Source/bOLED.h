@@ -29,17 +29,17 @@ typedef struct yizhi_RTC_Time_s
 //sbit OLED_DC = P1^5;
 //sbit OLED_CS = P5^4;
 
-sbit OLED_SCL= P2^6;                                                  /* 15W408AS  DIP28          */
-sbit OLED_SDA= P2^7;
-sbit OLED_RST= P1^0;
-sbit OLED_DC = P1^1;
-sbit OLED_CS = P1^2;
-
-//sbit OLED_SCL= P5^4;                                                    /* 15W408AS  DIP20 DIP16 Left ’˝÷√ */
-//sbit OLED_SDA= P1^5;
-//sbit OLED_RST= P1^4;
-//sbit OLED_DC = P1^3;
+//sbit OLED_SCL= P2^6;                                                  /* 15W408AS  DIP28   µπ÷√       */
+//sbit OLED_SDA= P2^7;
+//sbit OLED_RST= P1^0;
+//sbit OLED_DC = P1^1;
 //sbit OLED_CS = P1^2;
+
+sbit OLED_SCL= P5^4;                                                    /* 15W408AS  DIP20 DIP16 Left ’˝÷√ */
+sbit OLED_SDA= P1^5;
+sbit OLED_RST= P1^4;
+sbit OLED_DC = P1^3;
+sbit OLED_CS = P1^2;
 
 
 #define OLED_SCL_0    OLED_SCL = 0

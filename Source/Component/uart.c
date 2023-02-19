@@ -270,6 +270,11 @@ unsigned long strtou32(char *str)
  
 #define RPM2Q15_FACTOR  (32768.0f / 6000.0f)
 
+unsigned char    GucThrotSize[2];                              // max support 4 throttle cmd
+short            Gq15ThrotCmd[2]; // _at_ 0x014A;
+short            Gq15ReportData[4];
+unsigned char    GbReportFlg = 0, GbSetupScopeSent = 0;
+
 void uartAppSendThrot(int16_t sValue)
 {
     uint8_t cSumCheck = 0, i;
