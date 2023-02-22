@@ -7,16 +7,28 @@
 #define XLevel		((XLevelH&0x0F)*16+XLevelL)
 #define Max_Column	128
 #define Max_Row		64
-#define Landscope   0xa1     // Set SEG/Column Mapping       0xa0左右反置 0xa1正常
-#define Verticall   0xc8     // Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
-#define	Brightness	0x80 
+#define Landscope   0xa0     // Set SEG/Column Mapping       0xa0左右反置 0xa1正常
+#define Verticall   0xc0     // Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
+#define	Brightness	0xF0 
 #define X_WIDTH 128
 #define Y_WIDTH 64
 
 /*
+ * 显示屏正置
+ */
+#if defined(STC15W408ASDIP16)
+#undef Landscope
+#undef Verticall
+#define Landscope   0xa1     // Set SEG/Column Mapping       0xa0左右反置 0xa1正常
+#define Verticall   0xc1     // Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
+#endif
+
+/*
  * slection between SS1306 or SH1106
  */
-//#define CHIP_SH1106
+#if defined(IAP15W413ASDIP16)
+#define CHIP_SH1106
+#endif
 
 /*
  * slection between arm or 51 for const data 
@@ -29,7 +41,7 @@
 //#define FEATURE_F6x8
 #define FEATURE_F8x16
 //#define FEATURE_F16x32
-//#define FEATURE_HANZI
+#define FEATURE_HANZI
 //#define FEATURE_BMP
 
 

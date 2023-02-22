@@ -48,6 +48,18 @@ typedef long           int32_t;
 #define INT32   long 
 
 
+#define IAP15W413ASDIP28    //IAP15W413ASDIP28  IAP15W413ASDIP16 STC15W408ASDIP16
+//#define SENSOR_SHT3x
+//#define SENSOR_HMC5883L
+//#define SENSOR_MPU6500
+//#define SENSOR_DS18B20
+//#define PORT_IIC
+//#define PORT_SPI
+
+
+
+
+
 void yanshi(void);
 void msDelay(uint16_t m);
 void Delay_us(uint16 m);
