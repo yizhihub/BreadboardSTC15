@@ -13,7 +13,7 @@
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
-          <Device>STC15W408AS Series</Device>
+          <Device>STC15W408AS</Device>
           <Vendor>STC</Vendor>
           <Cpu>IRAM(0-0xFF) XRAM(0-0xFF) IROM(0-0x1FF8) CLOCK(35000000) MODP2</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -149,7 +149,7 @@
             <RestoreSysVw>1</RestoreSysVw>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>9</TargetSelection>
+          <TargetSelection>10</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
