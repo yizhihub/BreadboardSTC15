@@ -17,8 +17,8 @@ void i2cStart();
 void i2cStop();
 uchar i2cRespons(void);
 void i2cAnswer(uchar ans);
-void i2cWriteByte(uchar dat);
-uchar i2cReadByte();
+uchar i2cWriteByte(uchar dat);
+uchar i2cReadByte(uchar ans);
 void IIC_WriteChar(uchar ad,uchar add,uchar dat);
 uchar IIC_ReadChar(uchar ad,uchar add);      // ¶ÁÐ´Ò»¸ö×Ö½Ú 
 //void  IIC_WriteN(uchar ad,uchar add,uchar *j);

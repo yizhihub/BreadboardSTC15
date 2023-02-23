@@ -21,46 +21,51 @@
 //#define DBG(...)
 //#endif
 
-#define SHT3X_CMD_GETDATA_POLLING_H (0x2400) // measurement: polling, high repeatability
-#define SHT3X_CMD_GETDATA_POLLING_M (0x240B) // measurement: polling, medium repeatability
-#define SHT3X_CMD_GETDATA_POLLING_L (0x2416) // measurement: polling, low repeatability
+#define SHT3X_GETDATA_POLLING_H (0x2400) // measurement: polling, high repeatability
+#define SHT3X_GETDATA_POLLING_M (0x240B) // measurement: polling, medium repeatability
+#define SHT3X_GETDATA_POLLING_L (0x2416) // measurement: polling, low repeatability
 
-#define SHT3X_CMD_READ_SERIAL_NUMBER             (0x3780)///<  Read the chip serial number
-#define SHT3X_CMD_GETDATA_H_CLOCKENBLED          (0x2C06)///<  Measurement:high repeatability
-#define SHT3X_CMD_GETDATA_M_CLOCKENBLED          (0x2C0D)///<  Measurement: medium repeatability
-#define SHT3X_CMD_GETDATA_L_CLOCKENBLED          (0x2C10)///<  Measurement: low repeatability
-#define SHT3X_CMD_SETMODE_H_FREQUENCY_HALF_HZ    (0x2032)///<  Measurement: periodic 0.5 mps, high repeatability
-#define SHT3X_CMD_SETMODE_M_FREQUENCY_HALF_HZ    (0x2024)///<  Measurement: periodic 0.5 mps, medium
-#define SHT3X_CMD_SETMODE_L_FREQUENCY_HALF_HZ    (0x202F)///<  Measurement: periodic 0.5 mps, low repeatability
-#define SHT3X_CMD_SETMODE_H_FREQUENCY_1_HZ       (0x2130)///<  Measurement: periodic 1 mps, high repeatability
-#define SHT3X_CMD_SETMODE_M_FREQUENCY_1_HZ       (0x2126)///<  Measurement: periodic 1 mps, medium repeatability
-#define SHT3X_CMD_SETMODE_L_FREQUENCY_1_HZ       (0x212D)///<  Measurement: periodic 1 mps, low repeatability
-#define SHT3X_CMD_SETMODE_H_FREQUENCY_2_HZ       (0x2236)///<  Measurement: periodic 2 mps, high repeatability
-#define SHT3X_CMD_SETMODE_M_FREQUENCY_2_HZ       (0x2220)///<  Measurement: periodic 2 mps, medium repeatability
-#define SHT3X_CMD_SETMODE_L_FREQUENCY_2_HZ       (0x222B)///<  Measurement: periodic 2 mps, low repeatability
-#define SHT3X_CMD_SETMODE_H_FREQUENCY_4_HZ       (0x2334)///<  Measurement: periodic 4 mps, high repeatability
-#define SHT3X_CMD_SETMODE_M_FREQUENCY_4_HZ       (0x2322)///<  Measurement: periodic 4 mps, medium repeatability
-#define SHT3X_CMD_SETMODE_L_FREQUENCY_4_HZ       (0x2329)///<  Measurement: periodic 4 mps, low repeatability
-#define SHT3X_CMD_SETMODE_H_FREQUENCY_10_HZ      (0x2737)///<  Measurement: periodic 10 mps, high repeatability
-#define SHT3X_CMD_SETMODE_M_FREQUENCY_10_HZ      (0x2721)///<  Measurement: periodic 10 mps, medium
-#define SHT3X_CMD_SETMODE_L_FREQUENCY_10_HZ      (0x272A)///<  Measurement: periodic 10 mps, low repeatability
-#define SHT3X_CMD_GETDATA                        (0xE000)///<  Readout measurements for periodic mode
+#define SHT3X_READ_SERIAL_NUMBER             (0x3780)///<  Read the chip serial number
+#define SHT3X_GETDATA_H_CLOCKENBLED          (0x2C06)///<  Measurement:high repeatability
+#define SHT3X_GETDATA_M_CLOCKENBLED          (0x2C0D)///<  Measurement: medium repeatability
+#define SHT3X_GETDATA_L_CLOCKENBLED          (0x2C10)///<  Measurement: low repeatability
+#define SHT3X_SETMODE_H_FREQUENCY_HALF_HZ    (0x2032)///<  Measurement: periodic 0.5 mps, high repeatability
+#define SHT3X_SETMODE_M_FREQUENCY_HALF_HZ    (0x2024)///<  Measurement: periodic 0.5 mps, medium
+#define SHT3X_SETMODE_L_FREQUENCY_HALF_HZ    (0x202F)///<  Measurement: periodic 0.5 mps, low repeatability
+#define SHT3X_SETMODE_H_FREQUENCY_1_HZ       (0x2130)///<  Measurement: periodic 1 mps, high repeatability
+#define SHT3X_SETMODE_M_FREQUENCY_1_HZ       (0x2126)///<  Measurement: periodic 1 mps, medium repeatability
+#define SHT3X_SETMODE_L_FREQUENCY_1_HZ       (0x212D)///<  Measurement: periodic 1 mps, low repeatability
+#define SHT3X_SETMODE_H_FREQUENCY_2_HZ       (0x2236)///<  Measurement: periodic 2 mps, high repeatability
+#define SHT3X_SETMODE_M_FREQUENCY_2_HZ       (0x2220)///<  Measurement: periodic 2 mps, medium repeatability
+#define SHT3X_SETMODE_L_FREQUENCY_2_HZ       (0x222B)///<  Measurement: periodic 2 mps, low repeatability
+#define SHT3X_SETMODE_H_FREQUENCY_4_HZ       (0x2334)///<  Measurement: periodic 4 mps, high repeatability
+#define SHT3X_SETMODE_M_FREQUENCY_4_HZ       (0x2322)///<  Measurement: periodic 4 mps, medium repeatability
+#define SHT3X_SETMODE_L_FREQUENCY_4_HZ       (0x2329)///<  Measurement: periodic 4 mps, low repeatability
+#define SHT3X_SETMODE_H_FREQUENCY_10_HZ      (0x2737)///<  Measurement: periodic 10 mps, high repeatability
+#define SHT3X_SETMODE_M_FREQUENCY_10_HZ      (0x2721)///<  Measurement: periodic 10 mps, medium
+#define SHT3X_SETMODE_L_FREQUENCY_10_HZ      (0x272A)///<  Measurement: periodic 10 mps, low repeatability
+#define SHT3X_GETDATA                        (0xE000)///<  Readout measurements for periodic mode
 
-#define SHT3X_CMD_STOP_PERIODIC_ACQUISITION_MODE (0x3093)///< 
-#define SHT3X_CMD_SOFT_RESET                     (0x30A2)///<  Soft reset
-#define SHT3X_CMD_HEATER_ENABLE                  (0x306D)///<  Enabled heater
-#define SHT3X_CMD_HEATER_DISABLE                 (0x3066)///<  Disable heater
-#define SHT3X_CMD_READ_STATUS_REG                (0xF32D)///<  Read status register
-#define SHT3X_CMD_CLEAR_STATUS_REG               (0x3041)///<  Clear status register
+#define SHT3X_STOP_PERIODIC_ACQUISITION_MODE (0x3093)///< 
+#define SHT3X_SOFT_RESET                     (0x30A2)///<  Soft reset
+#define SHT3X_HEATER_ENABLE                  (0x306D)///<  Enabled heater
+#define SHT3X_HEATER_DISABLE                 (0x3066)///<  Disable heater
+#define SHT3X_READ_STATUS_REG                (0xF32D)///<  Read status register
+#define SHT3X_CLEAR_STATUS_REG               (0x3041)///<  Clear status register
 
-#define SHT3X_CMD_READ_HIGH_ALERT_LIMIT_SET      (0xE11F)///<  Read alert limits, high set
-#define SHT3X_CMD_READ_HIGH_ALERT_LIMIT_CLEAR    (0xE114)///<  Read alert limits, high clear
-#define SHT3X_CMD_READ_LOW_ALERT_LIMIT_CLEAR     (0xE109)///<  Read alert limits, low clear
-#define SHT3X_CMD_READ_LOW_ALERT_LIMIT_SET       (0xE102)///<  Read alert limits, low set
-#define SHT3X_CMD_WRITE_HIGH_ALERT_LIMIT_SET     (0x611D)///<  Write alert limits, high set
-#define SHT3X_CMD_WRITE_HIGH_ALERT_LIMIT_CLEAR   (0x6116)///<  Write alert limits, high clear
-#define SHT3X_CMD_WRITE_LOW_ALERT_LIMIT_CLEAR    (0x610B)///<  Write alert limits, low clear
-#define SHT3X_CMD_WRITE_LOW_ALERT_LIMIT_SET      (0x6100)///<  Write alert limits, low set
+#define SHT3X_READ_HIGH_ALERT_LIMIT_SET      (0xE11F)///<  Read alert limits, high set
+#define SHT3X_READ_HIGH_ALERT_LIMIT_CLEAR    (0xE114)///<  Read alert limits, high clear
+#define SHT3X_READ_LOW_ALERT_LIMIT_CLEAR     (0xE109)///<  Read alert limits, low clear
+#define SHT3X_READ_LOW_ALERT_LIMIT_SET       (0xE102)///<  Read alert limits, low set
+#define SHT3X_WRITE_HIGH_ALERT_LIMIT_SET     (0x611D)///<  Write alert limits, high set
+#define SHT3X_WRITE_HIGH_ALERT_LIMIT_CLEAR   (0x6116)///<  Write alert limits, high clear
+#define SHT3X_WRITE_LOW_ALERT_LIMIT_CLEAR    (0x610B)///<  Write alert limits, low clear
+#define SHT3X_WRITE_LOW_ALERT_LIMIT_SET      (0x6100)///<  Write alert limits, low set
+
+
+
+
+extern void SHT3x_Test(void);
 //class DFRobot_SHT3x
 //{
 //public:
@@ -310,98 +315,6 @@
 //  uint8_t environmentState();
 //  
 //  /**
-//   * @fn setTemperatureLimitC
-//   * @brief Set the threshold temperature and alarm clear temperature(°C)
-//   * @param highset  High temperature alarm point, when the temperature is greater than this value, the ALERT pin generates an alarm signal.
-//   * @param highClear  High temperature alarm clear point, alarming when the temp higher than the highset, otherwise the alarm signal will be cleared.
-//   * @param lowset  Low temperature alarm point, when the temperature is lower than this value, the ALERT pin generates an alarm signal.
-//   * @param lowclear  Low temperature alarm clear point, alarming when the temp lower than the highset, otherwise the alarm signal will be cleared.
-//   * @note range: -40 to 125 degrees Celsius, highset > highClear > lowclear > lowset. 
-//   * @return  A return to 0 indicates a successful setting.
-//   */
-//  uint8_t  setTemperatureLimitC(float highset,float highclear,float lowset,float lowclear);
-//  
-//  /**
-//   * @fn setTemperatureLimitF
-//   * @brief Set the threshold temperature and alarm clear temperature(°F)
-//   * @param highset  High temperature alarm point, when the temperature is greater than this value, the ALERT pin generates an alarm signal.
-//   * @param highClear High temperature alarm clear point, alarming when the temp higher than the highset, otherwise the alarm signal will be cleared.
-//   * @param lowset Low temperature alarm point, when the temperature is lower than this value, the ALERT pin generates an alarm signal.
-//   * @param lowclear Low temperature alarm clear point, alarming when the temp lower than the highset, otherwise the alarm signal will be cleared.
-//   * @note Range: -40 to 257 (Fahrenheit), highset > highClear > lowclear > lowset.
-//   * @return  A return to 0 indicates a successful setting.
-//   */
-//  uint8_t  setTemperatureLimitF(float highset,float highclear, float lowset,float lowclear);
-
-//  /**
-//   * @fn setHumidityLimitRH
-//   * @brief Set the relative humidity threshold temperature and the alarm clear humidity(%RH)
-//   * @param highset  High humidity alarm point, when the humidity is greater than this value, the ALERT pin generates an alarm signal.
-//   * @param highClear  High humidity alarm clear point, alarming when the humidity higher than the highset, otherwise the alarm signal will be cleared.
-//   * @param lowset  Low humidity alarm point, when the humidity is lower than this value, the ALERT pin generates an alarm signal.
-//   * @param lowclear  Low humidity alarm clear point, alarming when the humidity lower than the highset, otherwise the alarm signal will be cleared.
-//   * @note range: 0 - 100 %RH, highset > highClear > lowclear > lowset 
-//   * @return: A return to 0 indicates a successful setting.
-//   */
-//  uint8_t setHumidityLimitRH(float highset,float highclear, float lowset,float lowclear);
-//  
-//  /**
-//   * @fn measureTemperatureLimitC
-//   * @brief Measure temperature threshold temperature and alarm clear temperature
-//   * @return Return true indicates successful data acquisition
-//   */
-//  bool measureTemperatureLimitC();
-//  
-//  /**
-//   * @fn getTemperatureHighSetC
-//   * @brief Get high temperature alarm points(°C)
-//   * @return Return high temperature alarm points(°C)
-//   */
-//  float getTemperatureHighSetC();
-//  
-//  /**
-//   * @fn getTemperatureHighClearC
-//   * @brief Get high temperature alarm clear points(°C)
-//   * @return Return high temperature alarm clear points(°C)
-//   */
-//  float getTemperatureHighClearC();
-//  
-//  /**
-//   * @fn getTemperatureLowClearC
-//   * @brief Get low temperature alarm clear points(°C)
-//   * @return Return low temperature alarm clear points(°C)
-//   */
-//  float getTemperatureLowClearC();
-//  
-//  /**
-//   * @fn getTemperatureLowSetC
-//   * @brief Get low temperature alarm points(°C)
-//   * @return Return low temperature alarm points
-//   */
-//  float getTemperatureLowSetC();
-//  
-//  /**
-//   * @fn measureTemperatureLimitF
-//   * @brief Measure the threshold temperature and alarm clear temperature
-//   * @return Return true indicates successful data acquisition
-//   */
-//  bool measureTemperatureLimitF();
-//  
-//  /**
-//   * @fn getTemperatureHighSetF
-//   * @brief Get high temperature alarm points(°F)
-//   * @return Return high temperature alarm points(°F)
-//   */
-//  float getTemperatureHighSetF();
-//  
-//  /**
-//   * @fn getTemperatureHighClearF
-//   * @brief Get high temperature alarm clear points(°F)
-//   * @return Return high temperature alarm clear points(°F))
-//   */
-//  float getTemperatureHighClearF();
-//  
-//  /**
 //   * @fn getTemperatureLowClearF
 //   * @brief Get low temperature alarm clear points(°F)
 //   * @return Return low temperature alarm clear points(°F)
@@ -459,89 +372,6 @@
 //   * @param size  The number of command data, 8 digits for one data.
 //   */
 //  void  writeCommand(uint16_t cmd,size_t size);
-//  /**
-//   * @fn readStatusRegister
-//   * @brief Read the data stored in the status register.
-//   * @return Return to status like whether heater is ON or OFF, the status of the pin alert, reset status and the former cmd is executed or not.
-//   */
-//  sStatusRegister_t readStatusRegister();
-//  
-//  /**
-//   * @fn writeLimitData
-//   * @brief Write threshold data.
-//   * @param cmd  Send threshold data of chip command.
-//   * @param limitData Raw data on temperature and humidity need to be sent (humidity is 7 bits and temperatures are 11 bits).
-//   * @return Return 0 indicates that the command was sent successfully, other return values suggest unsuccessful send.
-//   */
-//  void writeLimitData(uint16_t cmd,uint16_t limitData);
-//  
-//  /**
-//   * @fn readLimitData
-//   * @brief Read threshold data.
-//   * @param cmd  Read threshold data of chip command.
-//   * @param *pBuf Save read data.
-//   */
-//  uint8_t readLimitData(uint16_t cmd,uint16_t *pBuf);
-//  /**
-//   * @fn readData
-//   * @brief Write command to sensor chip.
-//   * @param pBuf  The data contained in the command.
-//   * @param size  Number of command data
-//   * @return Return 0 indicates the successful read, other return values suggest unsuccessful read.
-//   */
-//  uint8_t readData(void *pBuf,size_t size);
-//  
-//  /**
-//   * @fn checkCrc
-//   * @brief CRC calibration.
-//   * @param data[] Data need to be calibrated.
-//   * @return Obtained calibration code.
-//   */
-//  uint8_t checkCrc(uint8_t data[]);
-//  
-//  /**
-//   * @fn convertTemperature
-//   * @brief Convert the data returned from the sensor to temperature(°C).
-//   * @param Data obtained from the sensor
-//   * @return Celsius temperature.
-//   */
-//  float convertTemperature(uint8_t rawTemperature[]);
-//  /**
-//   * @fn convertHumidity
-//   * @brief Convert the data returned from the sensor to relative humidity.
-//   * @param Data obtained from the sensor.
-//   * @return Relative humidity.
-//   */
-//  float convertHumidity(uint8_t rawHumidity[]);
-//  
-//  /**
-//   * @fn convertRawTemperature
-//   * @brief The temperature data to be written is converted into the data needed by the chip.
-//   * @param The temperature need to be written.
-//   * @return Data write to sensor.
-//   */
-//  uint16_t convertRawTemperature(float value);
-//  /**
-//   * @fn convertRawHumidity
-//   * @brief The relative humidity data to be written is converted into the data needed by the chip.
-//   * @param The relative humidity data to be written
-//   * @return Data write to sensor.
-//   */
-//  uint16_t convertRawHumidity(float value);
-//  /**
-//   * @fn convertTempLimitData
-//   * @brief Convert the data returned from the sensor to temperature limited data
-//   * @param Temperature limited data from sensor
-//   * @return Temperature limited data
-//   */
-//  float convertTempLimitData(uint16_t limit[]);
-//  /**
-//   * @fn convertHumidityLimitData
-//   * @brief Convert the data returned from the sensor to humidity limited data
-//   * @param Humidity limited data from sensor
-//   * @return Humidity limited data
-//   */
-//  float convertHumidityLimitData(uint16_t limit[]);
 //  /**
 //   * @fn write
 //   * @brief Transport data to chip

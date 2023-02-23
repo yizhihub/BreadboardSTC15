@@ -27,7 +27,7 @@ void main(void)
 {
    int16_t data sSpeedSet = 0, sSpdAct;
    float   data fVolAct;
-   uint16_t data sVccPower, sVbgMv;
+   uint16_t data sVccPower, sVbgMv, usStat;
    uint8_t  data ucTmp;
    KEYn_e eKeyPress;
   
@@ -130,19 +130,7 @@ void main(void)
                 if (GucT1sFlg) {
                     GucT1sFlg = 0; 
                     /* LED0= ~LED0; */
-//                    P1 ^= 0X03;   ucTmp = IIC_Read1(0x01, 0x02);
-                    
-
-//                    i2cStart();                       //准备接受数据
-//                    i2cWriteByte((0x44 << 1) | 0x01);    //采用地址B，并左移一位，补1，准备读数据。
-//                          SHT3X_CMD_READ_SERIAL_NUMBER
-                    i2cStart();
-                    i2cWriteByte((0x44 << 1) & 0xFE);
-                    if (i2cRespons() == 0) {
-                         OLED_P8x16Str(0, 0, "OK", 0);
-                    } else {
-                         OLED_P8x16Str(0, 0, "Fail", 0);
-                    }
+                     SHT3x_Test();
 //                    OLED_P8x16Time(0, 0, &GtTime);
                     sVccPower = Get_ADC10bitResult(0);
                     OLED_P8x16Dot(79, 0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1);

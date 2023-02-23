@@ -69,8 +69,13 @@ void i2cAnswer(uchar ans) // 主机应答期间， 1 应答 0 不应答
 }
 	 
 	 
-
-void i2cWriteByte(uchar dat)
+/****************************************************
+function: send a byte and return reponse status
+input:  dat: the byte to send
+output: return reponse status
+author: yizhi
+******************************************************/
+uchar i2cWriteByte(uchar dat)
 {
 	uchar i,temp;
 	temp=dat;
@@ -87,8 +92,15 @@ void i2cWriteByte(uchar dat)
 		temp<<=1;
 	  delayus();
 	}
+    return i2cRespons();
 }
-uchar i2cReadByte(void)
+/****************************************************
+function: receive a byte and if sent ack or not
+input:  ucAns: 1-send ack 0-not send ack
+output: received byte
+author: yizhi
+******************************************************/
+uchar i2cReadByte(uchar ans)
 {
 	uchar temp,i;
 	sda=1;
@@ -102,6 +114,7 @@ uchar i2cReadByte(void)
 		 scl=0;
 		 delayus();
 	}
+    i2cAnswer(ans);
 	return temp;
 }
 
@@ -117,11 +130,8 @@ void IIC_WriteChar(uchar ad,uchar add,uchar dat)
 {
 	i2cStart();
 	i2cWriteByte(ad);    // 0x3c HMC5883L   0xD0 MPU6050 
-	i2cRespons();
 	i2cWriteByte(add);
-	i2cRespons();
 	i2cWriteByte(dat);
-	i2cRespons();
 	i2cStop();
 	
 }
@@ -137,12 +147,9 @@ uchar IIC_ReadChar(uchar ad,uchar add)
 	  
 	  i2cStart();
 	  i2cWriteByte(ad);
-	  i2cRespons();
 	  i2cWriteByte(add);
-	  i2cRespons();
 	  i2cStart();
 	  i2cWriteByte(ad+0x01); // 先读后写
-	  i2cRespons();
-	  return i2cReadByte();
+	  return i2cReadByte(0);
 	
 }
