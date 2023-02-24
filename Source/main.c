@@ -22,7 +22,7 @@ uint code  Vbg_ROM _at_ 0x1ff7;                  /* STC-ISP下载程序时写入Flash末
     #error "NO MCU SELECTED"
 #endif
 
-#define  VER_ID    "BdbrdSTC_230222A"
+#define  VER_ID    "====BdbrdSTC===="
 char code  pcVerStr1[] = __TIME__;
 char code  pcVerStr2[] = __DATE__;
 char code  pcVerStr3[] = VER_ID; 
@@ -125,11 +125,11 @@ void main(void)
                     case KEY_UP:
                     case KEY_DOWN:
                     case KEY_LEFT:
-                        uartAppSendThrot(sSpeedSet);
+                        FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));
                         OLED_P8x16Four(36 + 28, 6, sSpeedSet);
                         break;
                     case KEY_RIGHT:
-                        uartAppSetupScope(0, 0);
+                        uartAppSetupScope(ADDR_BUSVOL, ADDR_SPEEDACT);
                         GbSetupScopeSent = 1;
                         break;
                     default :
@@ -137,8 +137,8 @@ void main(void)
                 }
             } else if (GbReportFlg){
                 GbReportFlg = 0;
-                fVolAct = Gq15ReportData[0] * (732.941f / 32768.0f);
-                sSpdAct = ((long)Gq15ReportData[1] * 4000) / 32768;
+                fVolAct = Gq15ReportData[0] * (MAX_VOLTAG_SCALE / 32768.0f);
+                sSpdAct = ((long)Gq15ReportData[1] * MAX_SPEED_SCALE) / 32768;
                 OLED_P8x16Dot(36 + 28, 2, fVolAct, 1, 1);
                 OLED_P8x16Four(36 + 28, 4, sSpdAct);
            
@@ -149,8 +149,7 @@ void main(void)
                 if (GucT1sFlg) {
                     GucT1sFlg = 0; 
                     /* LED0= ~LED0; */
-                     SHT3x_Test();
-//                    OLED_P8x16Time(0, 0, &GtTime);
+                    OLED_P8x16Time(0, 0, &GtTime);
                     sVccPower = Get_ADC10bitResult(0);
                     OLED_P8x16Dot(79, 0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1);
                 }

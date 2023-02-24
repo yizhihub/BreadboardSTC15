@@ -268,14 +268,12 @@ unsigned long strtou32(char *str)
  return temp;
 }
  
-#define RPM2Q15_FACTOR  (32768.0f / 6000.0f)
-
 unsigned char    GucThrotSize[2];                              // max support 4 throttle cmd
 short            Gq15ThrotCmd[2]; // _at_ 0x014A;
 short            Gq15ReportData[4];
 unsigned char    GbReportFlg = 0, GbSetupScopeSent = 0;
 
-void uartAppSendThrot(int16_t sValue)
+void uartAppSendThrot(int16_t qValue)
 {
     uint8_t cSumCheck = 0, i;
     int     sTemp1; 
@@ -285,7 +283,7 @@ void uartAppSendThrot(int16_t sValue)
     GucUartTxBuf[3] = 1u;     // number of var. to send
     GucUartTxBuf[4] = 2u;     // size of var.
     
-    sTemp1 = (int)((float)sValue * RPM2Q15_FACTOR);
+    sTemp1 = (int)((float)qValue * RPM2Q15_FACTOR);
     
     GucUartTxBuf[5] = *((uint8 *)(&sTemp1));
     GucUartTxBuf[6] = *((uint8 *)(&sTemp1) + 1);
@@ -300,22 +298,61 @@ void uartAppSendThrot(int16_t sValue)
     uartPutBuf(uart1, GucUartTxBuf, 8);
 }
 
+void FMSTR_WriteVar16(uint16_t usAddr, int16_t sValue)
+{
+    uint8_t ucSumCheck = 0, i;
+    
+    GucUartTxBuf[1] = 0xE4;   // commander message
+    GucUartTxBuf[2] = *((uint8_t *)&usAddr);
+    GucUartTxBuf[3] = *((uint8_t *)&usAddr + 1);
+    GucUartTxBuf[4] = *((uint8 *)(&sValue));
+    GucUartTxBuf[5] = *((uint8 *)(&sValue) + 1);
+    
+    for (i = 1; i < 6; i++) {
+        ucSumCheck += GucUartTxBuf[i];
+    }
+    GucUartTxBuf[6] = 0x100 - ucSumCheck;
+    
+    uartPutBuf(uart1, GucUartTxBuf, 7);
+}
+
+void FMSTR_WriteVar8(uint16_t usAddr, uint8_t ucValue)
+{
+    uint8_t ucSumCheck = 0, i;
+    
+    GucUartTxBuf[1] = 0xE3;   // commander message
+    GucUartTxBuf[2] = *((uint8_t *)&usAddr);
+    GucUartTxBuf[3] = *((uint8_t *)&usAddr + 1);
+    GucUartTxBuf[4] = *((uint8 *)(&ucValue));
+    GucUartTxBuf[5] = 0;
+    
+    for (i = 1; i < 6; i++) {
+        ucSumCheck += GucUartTxBuf[i];
+    }
+    GucUartTxBuf[6] = 0x100 - ucSumCheck;
+    
+    uartPutBuf(uart1, GucUartTxBuf, 7);
+}
+
 void uartAppSetupScope(uint16_t usAddr1, uint16_t usAddr2)
 {
-    
-    usAddr1 = usAddr1; 
-    usAddr2 = usAddr2;
+    uint8_t i, ucSumCheck = 0;
     
     GucUartTxBuf[1] = 0x08;   // commander message
     GucUartTxBuf[2] = 0x07;   // length of payload
     GucUartTxBuf[3] = 0x02;   // number of var's addrresses to send
+    
     GucUartTxBuf[4] = 0x02;   // size of var1 
-    GucUartTxBuf[5] = 0x00;
-    GucUartTxBuf[6] = 0x1A;
+    GucUartTxBuf[5] = *((uint8_t *)&usAddr1);
+    GucUartTxBuf[6] = *((uint8_t *)&usAddr1 + 1);
     GucUartTxBuf[7] = 0x02;   // size of var2
-    GucUartTxBuf[8] = 0x00;
-    GucUartTxBuf[9] = 0x2C;
-    GucUartTxBuf[10] = 0xA5;   // checksum 
+    GucUartTxBuf[8] = *((uint8_t *)&usAddr2);
+    GucUartTxBuf[9] = *((uint8_t *)&usAddr2 + 1);
+    
+    for (i = 1; i < 10; i++) {
+        ucSumCheck +=GucUartTxBuf[i];
+    }
+    GucUartTxBuf[10] = 0x100 - ucSumCheck;   // checksum 
     
     uartPutBuf(uart1, GucUartTxBuf, 11);    // PS 其实这几个App函数可以借助FreeMaster的协议层发送，协议层每个循环发送一个字节更合理。
 }

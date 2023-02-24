@@ -4,11 +4,28 @@
 #include "common.h"
 #include "timer.h"
 
-
-
 #define FOSC 11059200L       // somewhere set the value 11059200L 
 #define BAUD 9600
 
+#define REMOTER_FU6812       // REMOTER_FU6832   REMOTER_FU6812
+
+#if defined(REMOTER_FU6832)
+    #define MAX_SPEED_SCALE 5000
+    #define MAX_VOLTAG_SCALE (732.941f)
+    #define ADDR_SPEEDREF    0x014A
+    #define ADDR_BUSVOL      0x001A
+    #define ADDR_SPEEDACT    0x002C
+#elif defined(REMOTER_FU6812)
+    #define MAX_SPEED_SCALE 7000
+    #define MAX_VOLTAG_SCALE (60.0f)
+    #define ADDR_SPEEDREF    0x005C
+    #define ADDR_BUSVOL      0x0001
+    #define ADDR_SPEEDACT    0x001B
+#else
+    #error "NO REMOTER PLATFORM SELECT"
+#endif
+
+#define RPM2Q15_FACTOR  (32768.0f / MAX_SPEED_SCALE)
 
 typedef enum UART_yizhi
 {
@@ -41,6 +58,8 @@ void UART_Print(Uart_e uart,char *s,uint m,uint n,uint o,uint32 p);
 void uartAppSendThrot(int16_t sValue);
 void uartAppSetupScope(uint16_t usAddr1, uint16_t usAddr2);
 void uartAppReadScope(void);
+void FMSTR_WriteVar16(uint16_t usAddr, int16_t sValue);
+void FMSTR_WriteVar8(uint16_t usAddr,  uint8_t ucValue);
 
 
 

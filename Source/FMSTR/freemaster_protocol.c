@@ -660,7 +660,8 @@ FMSTR_BPTR FMSTR_WriteVar(FMSTR_BPTR pMessageIO, FMSTR_SIZE8 nSize)
 FMSTR_WriteVar_exit:
 #endif
       
-    return FMSTR_ConstToBuffer8(pResponse, nResponseCode);
+    pResponse = FMSTR_ConstToBuffer8(pResponse, nResponseCode);
+    return pResponse;
 }
 
 
