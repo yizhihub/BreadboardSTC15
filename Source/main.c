@@ -47,6 +47,10 @@ void main(void)
     float   data fVolAct;
     uint16_t data sVccPower, sVbgMv, sTimeCnt1 = 0;
     uint8_t  data ucTmp[2];
+#if defined(PORT_IIC)
+    int16_t sShtTemperature;
+    uint8_t ucShtHumidity;
+#endif
     KEYn_e eKeyPress;
 
     sVbgMv = Vbg_ROM;
@@ -56,15 +60,19 @@ void main(void)
     msDelay(50);       // OLED上电后延迟50ms
     OLED_Init(); 
     OLED_Fill(0xFF);   // FullRefresh time = 18.977ms @24MHz
+#if defined(FEATURE_F8x16)
     OLED_P8x16Str(0, 0, cVerID, 0);
     OLED_P8x16Str(32, 2, pcVerStr1, 0);
     OLED_P8x16Str(16, 4, pcVerStr2, 0);
+#endif
     msDelay(1000);
     OLED_Fill(0x00);
     
+#if defined(FEATURE_HANZI)
     OLED_Print(0, 2, "当前电压:-----V");
     OLED_Print(0, 4, "当前转速:-----RPM");
     OLED_Print(0, 6, "设定转速:-----RPM");
+#endif
     
 //    OLED_P8x16Str(0, 2, "SpeedSet:1000RPM", 1);
 //    OLED_P8x16Str(0, 4, "RX:", 1);
@@ -126,7 +134,7 @@ void main(void)
                     case KEY_DOWN:
                     case KEY_LEFT:
                         FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));
-                        OLED_P8x16Four(36 + 28, 6, sSpeedSet);
+                        OLED_P8x16Num(36 + 28, 6, sSpeedSet, 4);
                         break;
                     case KEY_RIGHT:
                         uartAppSetupScope(ADDR_BUSVOL, ADDR_SPEEDACT);
@@ -140,7 +148,7 @@ void main(void)
                 fVolAct = Gq15ReportData[0] * (MAX_VOLTAG_SCALE / 32768.0f);
                 sSpdAct = ((long)Gq15ReportData[1] * MAX_SPEED_SCALE) / 32768;
                 OLED_P8x16Dot(36 + 28, 2, fVolAct, 1, 1);
-                OLED_P8x16Four(36 + 28, 4, sSpdAct);
+                OLED_P8x16Num(36 + 28, 4, sSpdAct, 4);
            
             } else if (sTimeCnt1++ >= 59 && GbSetupScopeSent) {
                     sTimeCnt1 = 0;
@@ -149,9 +157,18 @@ void main(void)
                 if (GucT1sFlg) {
                     GucT1sFlg = 0; 
                     /* LED0= ~LED0; */
-                    OLED_P8x16Time(0, 0, &GtTime);
                     sVccPower = Get_ADC10bitResult(0);
+#if defined(PORT_IIC)
+                    SHT3x_Read(&sShtTemperature, &ucShtHumidity);
+#endif
+                    
+#if defined(FEATURE_F8x16)
+                    OLED_P8x16Time(0, 0, &GtTime);
                     OLED_P8x16Dot(79, 0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1);
+#elif defined(FEATURE_F6x8)
+                    OLED_P6x8Time(0, 0, &GtTime);
+                    OLED_P6x8Dot(92, 0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1);
+#endif
                 }
            }
         }

@@ -21,6 +21,7 @@
 //#define DBG(...)
 //#endif
 
+#define SHT3x_ADDRESS           (0x44)
 #define SHT3X_GETDATA_POLLING_H (0x2400) // measurement: polling, high repeatability
 #define SHT3X_GETDATA_POLLING_M (0x240B) // measurement: polling, medium repeatability
 #define SHT3X_GETDATA_POLLING_L (0x2416) // measurement: polling, low repeatability
@@ -66,6 +67,15 @@
 
 
 extern void SHT3x_Test(void);
+
+/**
+* @nameis SHT3x_Test
+* @effect Get the measured temperature (in degrees Celsius * 10) and Humidity (in %)
+* @import pointer
+* @export pTemp,pHumi
+* @return none
+*/
+void SHT3x_Read(int16_t *psTemp, uint8_t *pucHumi);
 //class DFRobot_SHT3x
 //{
 //public:

@@ -20,7 +20,7 @@
 #undef Landscope
 #undef Verticall
 #define Landscope   0xa1     // Set SEG/Column Mapping       0xa0左右反置 0xa1正常
-#define Verticall   0xc1     // Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
+#define Verticall   0xc8     // Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
 #endif
 
 /*
@@ -35,14 +35,6 @@
  */
 #define CONST_DATA code
 
-/*
- * other alternative feature
- */
-//#define FEATURE_F6x8
-#define FEATURE_F8x16
-//#define FEATURE_F16x32
-#define FEATURE_HANZI
-//#define FEATURE_BMP
 
 
 //======================================================
@@ -162,7 +154,7 @@ CONST_DATA unsigned char F6x8[][6] =
     { 0x00, 0x00, 0x07, 0x00, 0x07, 0x00 },   // "
     { 0x00, 0x14, 0x7f, 0x14, 0x7f, 0x14 },   // #
     { 0x00, 0x24, 0x2a, 0x7f, 0x2a, 0x12 },   // $
-    { 0x00, 0x62, 0x64, 0x08, 0x13, 0x23 },   // %
+    { 0x23, 0x13, 0x08, 0x64, 0x62, 0x00 },   // %
     { 0x00, 0x36, 0x49, 0x55, 0x22, 0x50 },   // &
     { 0x00, 0x00, 0x05, 0x03, 0x00, 0x00 },   // '
     { 0x00, 0x00, 0x1c, 0x22, 0x41, 0x00 },   // (
@@ -249,6 +241,7 @@ CONST_DATA unsigned char F6x8[][6] =
     { 0x00, 0x1C, 0xA0, 0xA0, 0xA0, 0x7C },   // y
     { 0x00, 0x44, 0x64, 0x54, 0x4C, 0x44 },   // z
     { 0x14, 0x14, 0x14, 0x14, 0x14, 0x14 }    // horiz lines
+    { 0x03, 0x3B, 0x44, 0x42, 0x42, 0x24 },//未命名文件0 ℃
 };
 #endif
 
@@ -653,10 +646,10 @@ void OLED_P6x8Str(uint8_t x,uint8_t y,uint8_t ch[],uint8_t yn)
     }
 }
 
-//显示4位整数
-void OLED_P6x8Four(uint8_t x, uint8_t y ,int num) 
+//显示N位整数 N = 1-4
+void OLED_P6x8Num(uint8_t x, uint8_t y ,int num, uint8_t ucLen) 
 { 
-    uint8_t i,ge,shi,bai,qian;
+    uint8_t i, ucWei[4];
     
     if(num>=0)
     {
@@ -667,34 +660,144 @@ void OLED_P6x8Four(uint8_t x, uint8_t y ,int num)
      num=-num;
      OLED_P6x8Char(x,y,'-');
     }
-    ge=num%10;
-    shi=num%100/10;
-    bai=num%1000/100;
-    qian=num/1000;
+    x += 6;
     
+    ucWei[3]=num%10;
+    ucWei[2]=num%100/10;
+    ucWei[1]=num%1000/100;
+    ucWei[0]=num/1000;
     
-    OLED_Set_Pos(x+6,y);
-    for(i=0;i<6;i++)
-    {
-        OLED_WrDat(F6x8[16+qian][i]) ; 
+    for (i = (4 - ucLen); i < 4; i++) {
+        OLED_P6x8Char(x, y, '0' + ucWei[i]);
+        x += 6;
     }
-    OLED_Set_Pos(x+12,y);
-    for(i=0;i<6;i++)
-    {
-        OLED_WrDat(F6x8[16+bai][i]) ; 
-    }
-    OLED_Set_Pos(x+18,y);
-    for(i=0;i<6;i++)
-    {
-        OLED_WrDat(F6x8[16+shi][i]) ; 
-    }
-    OLED_Set_Pos(x+24,y);
-    for(i=0;i<6;i++)
-    {
-        OLED_WrDat(F6x8[16+ge][i]) ; 
-    }
-    
 }
+
+void OLED_P6x8Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUnit) 
+{
+    /* 小数点浮动  高位灭零  负号位置固定 */
+    uint8_t subshi,subbai;
+    uint8_t length=0,x_temp,x_start;
+    uint16_t inte,temp;//deci; 
+    
+    x_start = x;	
+    if (m<0) {
+        OLED_P6x8Char(x, y, '-');
+        m = -m;
+        x += 6;
+    } else {
+        OLED_P6x8Char(x,y,' ');
+        x += 6; 
+    }
+    inte = (int16_t)m;  // 取出整数部分 
+    temp = inte;	 
+//	 for(w=1;w<5;w++)// 看整数部分有几位
+//	 {
+//     inte/=10;
+//     if(inte<0.01) break;			 
+//	 } 
+//	 if(w==1) // 
+//	 {
+//		 ge=(int16_t)m;
+//		 OLED_P8x16Char(x,y,16+ge); x+=8;
+//	 }
+//	 else
+//	 {
+//		 OLED_P8x16Char(x,y,16+shi); x+=8;	
+//		 OLED_P8x16Char(x,y,16+ge); x+=8;
+//	 } 	
+    x_temp=x; 
+    while(temp)  //看整数部分有几位 
+    {			
+        temp /= 10;
+        length ++;
+        x_temp+=6;
+    }
+    if(length)
+    {
+        length--;
+        while(inte)
+        {
+            OLED_P6x8Char(x+6*(length--),y,'0'+inte%10);                         /* 先写整数部分的个位 */
+            inte/=10;
+        }
+        x=x_temp;
+    }
+    else //整数部分为零  这就用不到x_temp 了
+    {
+      OLED_P6x8Char(x,y,'0'); x += 6;
+    }
+    
+    if (ucFracNum > 0) {
+        OLED_P6x8Char(x,y,'.');   x += 6; // 小数点
+	    subshi=(uint16_t)(m*10)%10;
+        OLED_P6x8Char(x,y,'0'+subshi);     x+=6; // 显示十分位
+    }
+    if (ucFracNum == 2) {
+  	    subbai=(uint16_t)(m*100)%10; 
+        OLED_P6x8Char(x,y,'0'+subbai);     x+=6; // 显示百分位
+    }
+    switch (ucUnit) {
+    
+    case 0:                                      // 摄氏度
+        OLED_P6x8Char(x,y,'z' + 2); x+=6;
+        break;
+    
+    case 1:
+        OLED_P6x8Char(x,y,'V'); x+=6;
+        break;
+    
+    case 2:
+        OLED_P6x8Char(x,y,'A'); x+=6;
+        break;
+    
+    case 3:
+        OLED_P6x8Char(x,y,'M'); x+=6;
+        break;
+
+    case 4:
+        OLED_P6x8Char(x,y,'%'); x+=6;
+        break;
+
+    default :
+        break;   
+    }
+    x_start = (x_start + 36) > 127 ? 127 : (x_start + 36);
+    while(x < (x_start)) {
+        OLED_P6x8Char(x,y,' '); x+=6;
+    }
+}
+
+/**
+***********************************************************************
+* @file  GPSTime_Disply() 
+* @author   yizhi 
+* @version 
+* @date    
+* @brief expect for the motify the define Don't forget the RCC_APB2PeriphClockCmd
+*********************************************************************
+*/
+void OLED_P6x8Time(uint8 x,uint8 y,RTC_Time_s * time)
+{
+	// OLED_P8x16Char(x,y,time->year%100/10+0x30); x+=8;
+    // OLED_P8x16Char(x,y,time->year%10+0x30);     x+=8;
+	// OLED_P8x16Char(x,y,'-'); x+=8;
+//	 OLED_P6x8Char(x,y,time->month%100/10+0x30);x+=6;
+//	 OLED_P6x8Char(x,y,time->month%10+0x30);    x+=6;
+//	 OLED_P6x8Char(x,y,'-');                    x+=6;
+//	 OLED_P6x8Char(x,y,time->date%100/10+0x30); x+=6;
+//	 OLED_P6x8Char(x,y,time->date%10+0x30);     x+=6; 
+//	 OLED_P6x8Char(x,y,' ');                    x+=6; 
+//	 OLED_P6x8Char(x,y,time->hour%100/10+0x30); x+=6;
+//	 OLED_P6x8Char(x,y,time->hour%10+0x30);     x+=6; 
+//	 OLED_P6x8Char(x,y,':');                    x+=6;
+     OLED_P6x8Char(x,y,time->minute%100/10+0x30); x+=6;
+	 OLED_P6x8Char(x,y,time->minute%10+0x30);     x+=6; 
+	 OLED_P6x8Char(x,y,':');                      x+=6;
+	 OLED_P6x8Char(x,y,time->second%100/10+0x30); x+=6;
+	 OLED_P6x8Char(x,y,time->second%10+0x30);      	
+}
+
 #endif
 
 #ifdef FEATURE_F8x16
@@ -749,250 +852,32 @@ void OLED_P8x16Str(uint8_t x,uint8_t y,uint8_t ch[],uint8_t yn)
     }
 }
 
-// 显示三位整数 
-void OLED_P8x16Three(uint8_t x,uint8_t y,int16_t m)  
-{
-    uint8_t ge=0,shi=0,bai=0;
-    uint8_t i=0;
-    if(m<0)
-    {
-        OLED_Set_Pos(x,y);
-        for(i=0;i<8;i++)
-            OLED_WrDat(F8X16[13*16+i]);   
-        OLED_Set_Pos(x,y+1);
-        for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[13*16+i+8]);
-        m=-m; 
-    }
-    else
-    {
-        OLED_Set_Pos(x,y);
-        for(i=0;i<8;i++)
-            OLED_WrDat(F8X16[i]);   
-        OLED_Set_Pos(x,y+1);
-        for(i=0;i<8;i++)
-            OLED_WrDat(F8X16[i+8]);
-    }                                     // write minus 
-	ge=m%10;
-	shi=m%100/10;
-	bai=m%1000/100;
 
-        OLED_Set_Pos(x+8,y);                  
-	for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[(16+bai)*16+i]);
-	OLED_Set_Pos(x+8,y+1);
-	for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[(16+bai)*16+i+8]); 
-        
-	OLED_Set_Pos(x+16,y);                 
-	for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[(16+shi)*16+i]);
-	OLED_Set_Pos(x+16,y+1);
-	for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[(16+shi)*16+i+8]); 
-        
-        OLED_Set_Pos(x+24,y);              // write "bai"
-	for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[(16+ge)*16+i]);
-	OLED_Set_Pos(x+24,y+1);              
-	for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[(16+ge)*16+i+8]); 
-        
-	/*
-    OLED_Set_Pos(x+40,y);              //write "ge"
-	for(i=0;i<8;i++)
-	OLED_WrDat(F8X16[(16+ge)*16+i]);
-	OLED_Set_Pos(x+40,y+1);
-	for(i=0;i<8;i++)
-	OLED_WrDat(F8X16[(16+ge)*16+i+8]); 	
-	*/  
-}
-
-// 显示四位整数
-void OLED_P8x16Four(uint8_t x,uint8_t y,int m)
+/* 显示N位整数  n = 1-5*/
+void OLED_P8x16Num(uint8_t x,uint8_t y,int m, uint8_t ucLen)
 {
-    uint8_t ge=0,shi=0,bai=0,qian=0;
-    uint8_t i=0;
-    if(m<0)
-    {
-        OLED_Set_Pos(x,y);
-        for(i=0;i<8;i++)
-            OLED_WrDat(F8X16[13*16+i]);   
-        OLED_Set_Pos(x,y+1);
-        for(i=0;i<8;i++)
-            OLED_WrDat(F8X16[13*16+i+8]);
-        m=-m; 
-    }
-	else
-    {
-        OLED_Set_Pos(x,y);
-        for(i=0;i<8;i++)
-            OLED_WrDat(F8X16[i]);   
-        OLED_Set_Pos(x,y+1);
-        for(i=0;i<8;i++)
-            OLED_WrDat(F8X16[i+8]);
+    uint8_t ucWei[5];
+    uint8_t i;
+    
+    if (m < 0) {
+        m = -m;
+        OLED_P8x16Char(x, y, '-');
+        x += 8;
+    } else {
+        OLED_P8x16Char(x, y, ' ');
+        x += 8;
     }                                     // write minus 
-	ge=m%10;
-	shi=m%100/10;
-	bai=m%1000/100;
-    	qian=m/1000%10;
-    //	wan=m/10000;
-        OLED_Set_Pos(x+8,y);                  //write "wan"
-	for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[(16+qian)*16+i]);
-	OLED_Set_Pos(x+8,y+1);
-	for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[(16+qian)*16+i+8]); 
-        
-	OLED_Set_Pos(x+16,y);                  //write "qian"
-	for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[(16+bai)*16+i]);
-	OLED_Set_Pos(x+16,y+1);
-	for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[(16+bai)*16+i+8]); 
-        
-        OLED_Set_Pos(x+24,y);              // write "bai"
-	for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[(16+shi)*16+i]);
-	OLED_Set_Pos(x+24,y+1);              
-	for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[(16+shi)*16+i+8]); 
-        
-	OLED_Set_Pos(x+32,y);              //write "shi
-        for(i=0;i<8;i++)
-	OLED_WrDat(F8X16[(16+ge)*16+i]);
-	OLED_Set_Pos(x+32,y+1);
-	for(i=0;i<8;i++)
-	OLED_WrDat(F8X16[(16+ge)*16+i+8]); 
-	/*
-    OLED_Set_Pos(x+40,y);              //write "ge"
-	for(i=0;i<8;i++)
-	OLED_WrDat(F8X16[(16+ge)*16+i]);
-	OLED_Set_Pos(x+40,y+1);
-	for(i=0;i<8;i++)
-	OLED_WrDat(F8X16[(16+ge)*16+i+8]); 	
-	*/   
+    ucWei[4] = m%10;
+    ucWei[3] = m%100/10;
+    ucWei[2] = m%1000/100;
+    ucWei[1] = m/1000%10;
+    ucWei[0] = m/10000;
+    
+    for (i = (5 - ucLen); i < 5; i++) {
+        OLED_P8x16Char(x, y, '0' + ucWei[i]);
+        x += 8;
+    }
 }
-//显示三位正整数 
-//void OLED_P8x16Num3(uint8_t x,uint8_t y,uint16_t m)
-//{
-//    uint8_t ge=0,shi=0,bai=0 ;//wan=0;
-//	uint8_t i=0;
-//     ge=m%10;
-//     shi=m%100/10;
-//     bai=m%1000/100;
-//    //qian=m/1000%10;
-//    //wan=m/10000;
-//    OLED_Set_Pos(x,y);                  //write "wan"
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+bai)*16+i]);
-//	OLED_Set_Pos(x,y+1);
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+bai)*16+i+8]); 
-//	OLED_Set_Pos(x+8,y);                  //write "qian"
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+shi)*16+i]);
-//	OLED_Set_Pos(x+8,y+1);
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+shi)*16+i+8]); 
-//    OLED_Set_Pos(x+16,y);              // write "bai"
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+ge)*16+i]);
-//	OLED_Set_Pos(x+16,y+1);              
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+ge)*16+i+8]); 
-//     
-//}
-// 显示四位正整数
-//void OLED_P8x16Num4(uint8_t x,uint8_t y,uint16_t m)
-//{
-//    uint8_t ge=0,shi=0,bai=0,qian=0;//wan=0;
-//	uint8_t i=0;
-//        
-//	ge=m%10;
-//	shi=m%100/10;
-//	bai=m%1000/100;
-//        qian=m/1000;
-//    //qian=m/1000%10;
-//    //wan=m/10000;
-//        OLED_Set_Pos(x,y);                  //write "wan"
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+qian)*16+i]);
-//	OLED_Set_Pos(x,y+1);
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+qian)*16+i+8]); 
-//	OLED_Set_Pos(x+8,y);                  //write "qian"
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+bai)*16+i]);
-//	OLED_Set_Pos(x+8,y+1);
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+bai)*16+i+8]); 
-//        OLED_Set_Pos(x+16,y);              // write "bai"
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+shi)*16+i]);
-//	OLED_Set_Pos(x+16,y+1);              
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+shi)*16+i+8]); 
-//	OLED_Set_Pos(x+24,y);              //write "shi"
-//	for(i=0;i<8;i++)
-//	OLED_WrDat(F8X16[(16+ge)*16+i]);
-//	OLED_Set_Pos(x+24,y+1);
-//	for(i=0;i<8;i++)
-//	OLED_WrDat(F8X16[(16+ge)*16+i+8]); 	
-//	
-//     /* OLED_Set_Pos(x+40,y);              //write "ge"
-//	for(i=0;i<8;i++)
-//	OLED_WrDat(F8X16[(16+ge)*16+i]);
-//	OLED_Set_Pos(x+40,y+1);
-//	for(i=0;i<8;i++)
-//	OLED_WrDat(F8X16[(16+ge)*16+i+8]); 	
-//	
-//	*/
-//    
-//}
-// 显示五位正整数
-//void OLED_P8x16Num5(uint8_t x,uint8_t y,uint16_t m)
-//{
-//  uint8_t ge=0,shi=0,bai=0,qian=0,wan=0;
-//	uint8_t i=0;
-//        
-//	ge  =m%10;
-//	shi =m%100/10;
-//	bai =m%1000/100;
-//  qian=m%10000/1000;
-//  wan =m/10000;
-//    
-//    OLED_Set_Pos(x,y);                  //write "wan"
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+wan)*16+i]);
-//	OLED_Set_Pos(x,y+1);
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+wan)*16+i+8]); 
-//	OLED_Set_Pos(x+8,y);                  //write "qian"
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+qian)*16+i]);
-//	OLED_Set_Pos(x+8,y+1);
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+qian)*16+i+8]); 
-//        OLED_Set_Pos(x+16,y);              // write "bai"
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+bai)*16+i]);
-//	OLED_Set_Pos(x+16,y+1);              
-//	for(i=0;i<8;i++)
-//        OLED_WrDat(F8X16[(16+bai)*16+i+8]); 
-//	OLED_Set_Pos(x+24,y);              //write "shi"
-//	for(i=0;i<8;i++)
-//	OLED_WrDat(F8X16[(16+shi)*16+i]);
-//	OLED_Set_Pos(x+24,y+1);
-//	for(i=0;i<8;i++)
-//	OLED_WrDat(F8X16[(16+shi)*16+i+8]); 	
-//        OLED_Set_Pos(x+32,y);              //write "ge"
-//	for(i=0;i<8;i++)
-//	OLED_WrDat(F8X16[(16+ge)*16+i]);
-//	OLED_Set_Pos(x+32,y+1);
-//	for(i=0;i<8;i++)
-//	OLED_WrDat(F8X16[(16+ge)*16+i+8]); 	
-//}
 //m^n 
 uint32_t mypow(uint8_t m,uint8_t n)
 {
@@ -1062,12 +947,14 @@ void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUni
     {
       OLED_P8x16Char(x,y,'0'); x+=8;
     }
-    OLED_P8x16Char(x,y,'.'); x+=8; // 小数点
-    
-	subshi=(uint16_t)(m*10)%10;
-  	subbai=(uint16_t)(m*100)%10; 
-    OLED_P8x16Char(x,y,'0'+subshi); x+=8; // 显示十分位
+
+    if (ucFracNum > 0) {
+		OLED_P8x16Char(x,y,'.'); x+=8; // 小数点
+		subshi=(uint16_t)(m*10)%10;
+		OLED_P8x16Char(x,y,'0'+subshi); x+=8; // 显示十分位
+    }
     if (ucFracNum == 2) {
+		subbai=(uint16_t)(m*100)%10; 
         OLED_P8x16Char(x,y,'0'+subbai); x+=8; // 显示百分位
     }
     switch (ucUnit) {
@@ -1086,9 +973,13 @@ void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUni
         break;
     
     case 3:
-        OLED_P8x16Char(x,y,'c'); x+=8;
-        OLED_P8x16Char(x,y,'m'); x+=8;
+        OLED_P8x16Char(x,y,'M'); x+=8;
         break;
+
+    case 4:
+        OLED_P8x16Char(x,y,'%'); x+=8;
+        break;
+
     default :
         break;   
     }

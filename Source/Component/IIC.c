@@ -36,7 +36,7 @@ void i2cStop(void)
 	delayus();
 }
 
-uchar i2cRespons(void)   // 器件应答主机      FebA by yizhi 2023
+uchar i2cRespons(void)   // 器件应答主机   0有应答 1没有应答   FebA by yizhi 2023
 {
 	unsigned int i=0;
 	sda=1;     // master现将sda拉高，// 

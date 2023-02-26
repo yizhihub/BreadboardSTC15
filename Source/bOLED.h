@@ -5,6 +5,14 @@
 //#include "fsl_common.h"
 //#include "fsl_snvs_hp.h"
 
+/*
+ * other alternative feature
+ */
+//#define FEATURE_F6x8
+#define FEATURE_F8x16
+//#define FEATURE_F16x32
+//#define FEATURE_HANZI
+//#define FEATURE_BMP
 
 typedef struct yizhi_RTC_Time_s
 {
@@ -91,18 +99,16 @@ void OLED_P6x8Str(uint8_t x,uint8_t y,uint8_t ch[],uint8_t yn);
 void OLED_P8x16Char(uint8_t x,uint8_t y,uint8_t wan);
 void OLED_P8x16Str(uint8_t x,uint8_t y,uint8_t ch[],uint8_t yn);
 /* 数值显示 */
-void OLED_P8x16Three(uint8_t x,uint8_t y,int16_t m);  // 显示3位整数  大  
-void OLED_P8x16Four(uint8_t x,uint8_t y,int m);  //  显示4位整数  大 
-void OLED_P8x16Num3(uint8_t x,uint8_t y,uint16_t m); //  显示3位正整数
-void OLED_P8x16Num4(uint8_t x,uint8_t y,uint16_t m); //  显示4位正整数
-void OLED_P8x16Num5(uint8_t x,uint8_t y,uint16_t m); //  显示5位正整数
+void OLED_P6x8Num(uint8_t x, uint8_t y, int  num, uint8_t ucLen);// 显示4位整数  小 
+void OLED_P6x8Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUnit);
+void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUnit);   // 显示小数
+void OLED_P8x16Num(uint8_t x,uint8_t y, int m, uint8_t ucLen);
 /* 特殊数值显示 */
 void OLED_P16x32Num(uint8_t p,int num,uint8_t unit);// 特大字体
-void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUnit);   // 显示小数
-void OLED_P6x8Four(uint8_t x, uint8_t y, int  num);// 显示4位整数  小 
 void OLED_HexDisp(uint8_t x,uint8_t y,uint8_t *dat,uint8_t N);
 void OLED_P16x32Time(uint8_t p, RTC_Time_s *ptTime);//大字体时钟显示
 void OLED_P8x16Time(uint8 x,uint8 y,RTC_Time_s * time);//小字体时钟显示;
+void OLED_P6x8Time(uint8 x,uint8 y,RTC_Time_s * time); //小字体时钟显示;
 void timeClockStep(RTC_Time_s *ptTime);
  
 #endif
