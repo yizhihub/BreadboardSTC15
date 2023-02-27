@@ -22,7 +22,8 @@ uint code  Vbg_ROM _at_ 0x1ff7;                  /* STC-ISP下载程序时写入Flash末
     #error "NO MCU SELECTED"
 #endif
 
-#define  VER_ID    "====BdbrdSTC===="
+#define  VER_ID    "=FU6812Remoter230308a"
+
 char code  pcVerStr1[] = __TIME__;
 char code  pcVerStr2[] = __DATE__;
 char code  pcVerStr3[] = VER_ID; 
@@ -53,7 +54,7 @@ void main(void)
 #endif
     KEYn_e eKeyPress;
 
-    sVbgMv = Vbg_ROM;
+    sVbgMv = Vbg_ROM + 20;
     ucTmp[0] = ucTmp[1];
     EA = 0;
     port_init();
@@ -62,21 +63,21 @@ void main(void)
     OLED_Fill(0xFF);   // FullRefresh time = 18.977ms @24MHz
 #if defined(FEATURE_F8x16)
     OLED_P8x16Str(0, 0, cVerID, 0);
-    OLED_P8x16Str(32, 2, pcVerStr1, 0);
-    OLED_P8x16Str(16, 4, pcVerStr2, 0);
+    OLED_P8x16Str(32, 4, pcVerStr1, 0);
+    OLED_P8x16Str(16, 6, pcVerStr2, 0);
 #endif
-    msDelay(1000);
+    msDelay(1500);
     OLED_Fill(0x00);
+    
+#if defined(FEATURE_F6x8)
+    OLED_P6x8Str(0, 1, cVerID, 1);
+#endif
     
 #if defined(FEATURE_HANZI)
     OLED_Print(0, 2, "当前电压:-----V");
     OLED_Print(0, 4, "当前转速:-----RPM");
     OLED_Print(0, 6, "设定转速:-----RPM");
 #endif
-    
-//    OLED_P8x16Str(0, 2, "SpeedSet:1000RPM", 1);
-//    OLED_P8x16Str(0, 4, "RX:", 1);
-//    OLED_P8x16Str(0, 6, "KEY:", 1); 
     
 	AUXR &= 0x7F;			//定时器时钟12T模式
 	TMOD &= 0xF0;			//设置定时器模式
@@ -97,33 +98,10 @@ void main(void)
     EA = 1;
     
     while(1) {
-
-//        if (sTimeCnt1++ == 2001) {
-//            sTimeCnt1 = 0;
-//            LED0= ~LED0;
-//            OLED_P8x16Time(36, 0, &GtTime);
-//            UART_Print(uart1, "测试：", sSpeedSet, sSpeedSet, sSpeedSet, sSpeedSet);         msDelay(4); 
-//        }
         if (GucT5msFlg) {
             GucT5msFlg = 0;
             eKeyPress = ADKey_Check();
             
-            if (eKeyPress == KEY_UP) {
-                sSpeedSet += 100;
-            } else if (eKeyPress == KEY_DOWN) {
-                sSpeedSet -= 100;
-            } else if (eKeyPress == KEY_LEFT) {
-                if (sSpeedSet == 0)
-                    sSpeedSet = 500;
-                else 
-                    sSpeedSet = 0;
-            } else if (eKeyPress == KEY_RIGHT) {
-                ;
-            } else {
-                ;
-            }
-            if (sSpeedSet < 0) sSpeedSet = 0;
-             
             /* 
              * 设定目标转速 以及 通过固定时基获取实际转速和电压。
              */
@@ -131,11 +109,30 @@ void main(void)
                 switch (eKeyPress)
                 {
                     case KEY_UP:
+                        if (sSpeedSet >= 500 && sSpeedSet < 2200) {
+                            sSpeedSet += 50;
+                            uartAppSendThrot(sSpeedSet);
+                            OLED_P8x16Num(36 + 28, 6, sSpeedSet, 4);
+                        }
+                        break;
+                        
                     case KEY_DOWN:
+                        if (sSpeedSet > 500) {
+                            sSpeedSet -= 50;
+                            uartAppSendThrot(sSpeedSet);
+                            OLED_P8x16Num(36 + 28, 6, sSpeedSet, 4);
+                        }
+                        break;
+                        
                     case KEY_LEFT:
-                        FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));
+                        
+                        if (sSpeedSet == 0) sSpeedSet = 800;
+                        else                sSpeedSet = 0;
+/*                        FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));  */
+                        uartAppSendThrot(sSpeedSet);
                         OLED_P8x16Num(36 + 28, 6, sSpeedSet, 4);
                         break;
+                    
                     case KEY_RIGHT:
                         uartAppSetupScope(ADDR_BUSVOL, ADDR_SPEEDACT);
                         GbSetupScopeSent = 1;
@@ -162,11 +159,11 @@ void main(void)
                     SHT3x_Read(&sShtTemperature, &ucShtHumidity);
 #endif
                     
-#if defined(FEATURE_F8x16)
-                    OLED_P8x16Time(0, 0, &GtTime);
-                    OLED_P8x16Dot(79, 0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1);
-#elif defined(FEATURE_F6x8)
+#if defined(FEATURE_F6x8)
                     OLED_P6x8Time(0, 0, &GtTime);
+                    OLED_P6x8Dot(92, 0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1);
+#elif defined(FEATURE_F8x16)
+                    OLED_P8x16Time(0, 0, &GtTime);
                     OLED_P6x8Dot(92, 0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1);
 #endif
                 }
