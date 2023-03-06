@@ -159,7 +159,9 @@ void main(void)
                     /* LED0= ~LED0; */
                     sVccPower = Get_ADC10bitResult(0);
 #if defined(PORT_IIC)
-                    SHT3x_Read(&sShtTemperature, &ucShtHumidity);
+                    SHT3x_Read(&sShtTemperature, &ucShtHumidity);    // 如果没有插SHT3x， 由于没有器件每次response，这个Read操作会非常慢。
+                    OLED_P16x32Num(1, sShtTemperature, 1);
+                    OLED_P8x16Dot(96, 6, ucShtHumidity, 0, 4);
 #endif
                     
 #if defined(FEATURE_F8x16)

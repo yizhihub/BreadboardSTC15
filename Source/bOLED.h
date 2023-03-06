@@ -10,8 +10,8 @@
  */
 //#define FEATURE_F6x8
 #define FEATURE_F8x16
-//#define FEATURE_F16x32
-//#define FEATURE_HANZI
+#define FEATURE_F16x32
+#define FEATURE_HANZI
 //#define FEATURE_BMP
 
 typedef struct yizhi_RTC_Time_s

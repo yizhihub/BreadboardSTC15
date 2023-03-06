@@ -107,11 +107,11 @@ void SHT3x_Read(int16_t *psTemp, uint8_t *pucHumi)
     *psTemp  = -450 + (((long)1750 * usTemperature) >> 16) ;
     *pucHumi = ((long)100 *usHumidity) >> 16;
 
-#if defined(FEATURE_F8x16)
-    OLED_P8x16Dot(0, 2, (*psTemp) / 10.0f, 1, 0);
-    OLED_P8x16Dot(64,2, (*pucHumi),        0, 4);
-#elif defined(FEATURE_F6x8)
-    OLED_P6x8Dot(0, 1,  (*psTemp) / 10.0f, 1, 0);
-    OLED_P6x8Dot(36, 1, (*pucHumi),        0, 4);
-#endif
+//#if defined(FEATURE_F8x16)
+//    OLED_P8x16Dot(0, 2, (*psTemp) / 10.0f, 1, 0);
+//    OLED_P8x16Dot(79,2, (*pucHumi),        0, 4);
+//#elif defined(FEATURE_F6x8)
+//    OLED_P6x8Dot(0, 1,  (*psTemp) / 10.0f, 1, 0);
+//    OLED_P6x8Dot(36, 1, (*pucHumi),        0, 4);
+//#endif
 }

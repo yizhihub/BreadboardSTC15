@@ -13,7 +13,7 @@
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
-          <Device>STC15W408AS</Device>
+          <Device>STC15W408AS Series</Device>
           <Vendor>STC</Vendor>
           <Cpu>IRAM(0-0xFF) XRAM(0-0xFF) IROM(0-0x1FF8) CLOCK(35000000) MODP2</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -316,7 +316,7 @@
             <Fuzzy>3</Fuzzy>
             <Optimize>8</Optimize>
             <WarningLevel>2</WarningLevel>
-            <SizeSpeed>1</SizeSpeed>
+            <SizeSpeed>0</SizeSpeed>
             <ObjectExtend>1</ObjectExtend>
             <ACallAJmp>0</ACallAJmp>
             <InterruptVectorAddress>0</InterruptVectorAddress>
@@ -420,6 +420,11 @@
               <FileName>bSHT3x.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Source\bSHT3x.c</FilePath>
+            </File>
+            <File>
+              <FileName>bOLED.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Source\bOLED.h</FilePath>
             </File>
           </Files>
         </Group>
