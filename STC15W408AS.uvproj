@@ -322,7 +322,7 @@
             <InterruptVectorAddress>0</InterruptVectorAddress>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define></Define>
+              <Define>C51_PLATEFORM,</Define>
               <Undefine></Undefine>
               <IncludePath>.\Source;.\Source\Component;.\Source\FMSTR</IncludePath>
             </VariousControls>

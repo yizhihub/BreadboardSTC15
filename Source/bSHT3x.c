@@ -17,6 +17,7 @@
  
 static void SHT3x_Debug(uint8_t ucStat)
 {
+   ucStat = ucStat;
 #if  0
     static uint8_t ucX = 0, ucY = 4;
 
@@ -67,7 +68,7 @@ void SHT3x_Test(void)
     usStat |= i2cReadByte(0);
     i2cStop();
 #if defined(FEATURE_F8x16)
-    OLED_HexDisp(48, 0, (uint8*)&usStat, 2);
+    OLED_HexDisp(48, 0, (uint8*)&usStat, 2, 1);
 #endif
 }
 /**

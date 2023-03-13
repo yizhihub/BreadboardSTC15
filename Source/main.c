@@ -58,12 +58,13 @@ void main(void)
     EA = 0;
     port_init();
     msDelay(50);       // OLED上电后延迟50ms
-    OLED_Init(); 
-    OLED_Fill(0xFF);   // FullRefresh time = 18.977ms @24MHz
+    OLED_Init();
+    OLED_Fill(0x00);   // FullRefresh time = 18.977ms @24MHz SSD1306
 #if defined(FEATURE_F8x16)
-    OLED_P8x16Str(0, 0, cVerID, 0);
-    OLED_P8x16Str(32, 2, pcVerStr1, 0);
-    OLED_P8x16Str(16, 4, pcVerStr2, 0);
+    OLED_P8x16Str(0, OLED_LINE0, cVerID, 1);
+//    OLED_P8x16Str(32, OLED_LINE1, pcVerStr1, 1);
+//    OLED_P8x16Str(16, OLED_LINE2, pcVerStr2, 1);
+    OLED_P6x8Str(0, OLED_LINE1, cVerID, 1);
 #endif
     msDelay(1000);
     OLED_Fill(0x00);
@@ -134,7 +135,7 @@ void main(void)
                     case KEY_DOWN:
                     case KEY_LEFT:
                         FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));
-                        OLED_P8x16Num(36 + 28, 6, sSpeedSet, 4);
+                        OLED_P8x16Num(36 + 28, 6, sSpeedSet, 4, 1);
                         break;
                     case KEY_RIGHT:
                         uartAppSetupScope(ADDR_BUSVOL, ADDR_SPEEDACT);
@@ -147,8 +148,8 @@ void main(void)
                 GbReportFlg = 0;
                 fVolAct = Gq15ReportData[0] * (MAX_VOLTAG_SCALE / 32768.0f);
                 sSpdAct = ((long)Gq15ReportData[1] * MAX_SPEED_SCALE) / 32768;
-                OLED_P8x16Dot(36 + 28, 2, fVolAct, 1, 1);
-                OLED_P8x16Num(36 + 28, 4, sSpdAct, 4);
+                OLED_P8x16Dot(36 + 28, 2, fVolAct, 1, 1, 1);
+                OLED_P8x16Num(36 + 28, 4, sSpdAct, 4, 1);
            
             } else if (sTimeCnt1++ >= 59 && GbSetupScopeSent) {
                     sTimeCnt1 = 0;
@@ -160,16 +161,16 @@ void main(void)
                     sVccPower = Get_ADC10bitResult(0);
 #if defined(PORT_IIC)
                     SHT3x_Read(&sShtTemperature, &ucShtHumidity);    // 如果没有插SHT3x， 由于没有器件每次response，这个Read操作会非常慢。
-                    OLED_P16x32Num(1, sShtTemperature, 1);
-                    OLED_P8x16Dot(96, 6, ucShtHumidity, 0, 4);
+                    OLED_P8x16Dot(0, OLED_LINE2, sShtTemperature / 10.f, 1, 0, 1);
+                    OLED_P8x16Dot(62,OLED_LINE2, ucShtHumidity,         0, 4, 1);
 #endif
                     
 #if defined(FEATURE_F8x16)
-                    OLED_P8x16Time(0, 0, &GtTime);
-                    OLED_P8x16Dot(79, 0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1);
-#elif defined(FEATURE_F6x8)
-                    OLED_P6x8Time(0, 0, &GtTime);
-                    OLED_P6x8Dot(92, 0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1);
+                    OLED_P8x16Time(0, OLED_LINE0, &GtTime, 1);
+                    OLED_P8x16Dot(48, OLED_LINE0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1, 1);
+//#elif defined(FEATURE_F6x8)
+                    OLED_P6x8Time(0,  OLED_LINE1, &GtTime, 1);
+                    OLED_P6x8Dot(48,  OLED_LINE1, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1, 1);
 #endif
                 }
            }
