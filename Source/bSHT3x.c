@@ -67,7 +67,7 @@ void SHT3x_Test(void)
     usStat |= i2cReadByte(0);
     i2cStop();
 #if defined(FEATURE_F8x16)
-    OLED_HexDisp(48, 0, (uint8*)&usStat, 2);
+    OLED_HexDisp(48, 0, (uint8*)&usStat, 2, 1);
 #endif
 }
 /**
@@ -108,10 +108,10 @@ void SHT3x_Read(int16_t *psTemp, uint8_t *pucHumi)
     *pucHumi = ((long)100 *usHumidity) >> 16;
 
 #if defined(FEATURE_F8x16)
-    OLED_P8x16Dot(0, 2, (*psTemp) / 10.0f, 1, 0);
-    OLED_P8x16Dot(64,2, (*pucHumi),        0, 4);
+    OLED_P8x16Dot(0, 2, (*psTemp) / 10.0f, 1, 0, 1);
+    OLED_P8x16Dot(64,2, (*pucHumi),        0, 4, 1);
 #elif defined(FEATURE_F6x8)
-    OLED_P6x8Dot(0, 1,  (*psTemp) / 10.0f, 1, 0);
-    OLED_P6x8Dot(36, 1, (*pucHumi),        0, 4);
+    OLED_P6x8Dot(0, 1,  (*psTemp) / 10.0f, 1, 0, 1);
+    OLED_P6x8Dot(36, 1, (*pucHumi),        0, 4, 1);
 #endif
 }

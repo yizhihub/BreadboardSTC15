@@ -23,7 +23,7 @@ uint code  Vbg_ROM _at_ 0x1ff7;                  /* STC-ISP下载程序时写入Flash末
     #error "NO MCU SELECTED"
 #endif
 
-#define  VER_ID    "=FU6812Remoter230314a"
+#define  VER_ID    "=FU6812Remoter230317a"
 
 char code  pcVerStr1[] = __TIME__;
 char code  pcVerStr2[] = __DATE__;
@@ -65,21 +65,21 @@ void main(void)
     OLED_Init(); 
     OLED_Fill(0xFF);   // FullRefresh time = 18.977ms @24MHz
 #if defined(FEATURE_F8x16)
-    OLED_P8x16Str(0, 0, cVerID, 0);
-    OLED_P8x16Str(32, 4, pcVerStr1, 0);
-    OLED_P8x16Str(16, 6, pcVerStr2, 0);
+    OLED_P8x16Str(0, OLED_LINE0, cVerID, 0);
+    OLED_P8x16Str(32, OLED_LINE2, pcVerStr1, 0);
+    OLED_P8x16Str(16, OLED_LINE3, pcVerStr2, 0);
 #endif
     msDelay(1500);
     OLED_Fill(0x00);
     
 #if defined(FEATURE_F6x8)
-    OLED_P6x8Str(0, 1, cVerID, 1);
+    OLED_P6x8Str(0, OLED_LINE0 + (LINE_HEIGHT > 1), cVerID, 1);
 #endif
     
 #if defined(FEATURE_HANZI)
-    OLED_Print(0, 2, "当前电压:-----V");
-    OLED_Print(0, 4, "当前转速:-----RPM");
-    OLED_Print(0, 6, "设定转速:-----RPM");
+    OLED_Print(0, OLED_LINE1, "当前电压:-----V", 1);
+    OLED_Print(0, OLED_LINE2, "当前转速:-----RPM", 1);
+    OLED_Print(0, OLED_LINE3, "设定转速:-----RPM", 1);
 #endif
     
 	AUXR &= 0x7F;			//定时器时钟12T模式
@@ -115,7 +115,7 @@ void main(void)
                         if (sSpeedSet >= 500 && sSpeedSet < 2200) {
                             sSpeedSet += 50;
                             uartAppSendThrot(sSpeedSet);
-                            OLED_P8x16Num(36 + 28, 6, sSpeedSet, 4);
+                            OLED_P8x16Num(36 + 28, OLED_LINE3, sSpeedSet, 4, 1);
                         }
                         break;
                         
@@ -123,7 +123,7 @@ void main(void)
                         if (sSpeedSet > 500) {
                             sSpeedSet -= 50;
                             uartAppSendThrot(sSpeedSet);
-                            OLED_P8x16Num(36 + 28, 6, sSpeedSet, 4);
+                            OLED_P8x16Num(36 + 28, OLED_LINE3, sSpeedSet, 4, 1);
                         }
                         break;
                         
@@ -133,7 +133,7 @@ void main(void)
                         else                sSpeedSet = 0;
 /*                        FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));  */
                         uartAppSendThrot(sSpeedSet);
-                        OLED_P8x16Num(36 + 28, 6, sSpeedSet, 4);
+                        OLED_P8x16Num(36 + 28, OLED_LINE3, sSpeedSet, 4, 1);
                         break;
                     
                     case KEY_RIGHT:
@@ -146,8 +146,8 @@ void main(void)
                 GbReportFlg = 0;
                 fVolAct = Gq15ReportData[0] * (MAX_VOLTAG_SCALE / 32768.0f);
                 sSpdAct = ((long)Gq15ReportData[1] * MAX_SPEED_SCALE) / 32768;
-                OLED_P8x16Dot(36 + 28, 2, fVolAct, 1, 1);
-                OLED_P8x16Num(36 + 28, 4, sSpdAct, 4);
+                OLED_P8x16Dot(36 + 28, OLED_LINE1, fVolAct, 1, 1, 1);
+                OLED_P8x16Num(36 + 28, OLED_LINE2, sSpdAct, 4, 1);
            
             } else if (sTimeCnt1++ >= 59 && GbSetupScopeSent) {
                     sTimeCnt1 = 0;
@@ -160,9 +160,9 @@ void main(void)
                      * 故采用下面办法先发送SetupScope, 然后执行显示函数，大概会用掉10ms左右，然后延时50ms(必须)，然后执行SendThrot。
                      */
                     uartAppSetupScope(ADDR_BUSVOL, ADDR_SPEEDACT);
-                    OLED_P6x8Str(36, 0, "CONNECTED", 1);
+                    OLED_P6x8Str(36, OLED_LINE0, "CONNECTED", 1);
                     sSpeedSet = 800;
-                    OLED_P8x16Num(36 + 28, 6, sSpeedSet, 4);
+                    OLED_P8x16Num(36 + 28, OLED_LINE3, sSpeedSet, 4, 1);
                     msDelay(50);
                     uartAppSendThrot(sSpeedSet);
                     
@@ -183,11 +183,11 @@ void main(void)
 #endif
                     
 #if defined(FEATURE_F6x8)
-                    OLED_P6x8Time(0, 0, &GtTime);
-                    OLED_P6x8Dot(92, 0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1);
+                    OLED_P6x8Time(0, OLED_LINE0, &GtTime, 1);
+                    OLED_P6x8Dot(92, OLED_LINE0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1, 1);
 #elif defined(FEATURE_F8x16)
-                    OLED_P8x16Time(0, 0, &GtTime);
-                    OLED_P6x8Dot(92, 0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1);
+                    OLED_P8x16Time(0, OLED_LINE0, &GtTime, 1);
+                    OLED_P6x8Dot(92, OLED_LINE0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1, 1);
 #endif
                 }
            }
