@@ -14,6 +14,13 @@
 #define FEATURE_HANZI
 //#define FEATURE_BMP
 
+
+/*
+ * slection between arm or 51 for const data 
+ */
+#define CONST_DATA code
+extern CONST_DATA unsigned char F6x8[][6];
+
 typedef struct yizhi_RTC_Time_s
 {
     unsigned char second;
@@ -25,64 +32,7 @@ typedef struct yizhi_RTC_Time_s
     unsigned char year; //  ture year=2000+year;  
 }RTC_Time_s;	//定义的时间类型
 
-#if 1                //  1 for 51 platform   0 for arm platform
 
-#if defined(IAP15W413ASDIP16)
-sbit OLED_SCL= P1^2;                                                  /* 15W408AS  DIP16 Right 倒置*/
-sbit OLED_SDA= P1^3;
-sbit OLED_RST= P1^4;
-sbit OLED_DC = P1^5;
-sbit OLED_CS = P5^4;
-#elif defined(IAP15W413ASDIP28)
-sbit OLED_SCL= P2^6;                                                  /* 15W408AS  DIP28   倒置       */
-sbit OLED_SDA= P2^7;
-sbit OLED_RST= P1^0;
-sbit OLED_DC = P1^1;
-sbit OLED_CS = P1^2;
-#elif defined(STC15W408ASDIP16)
-sbit OLED_SCL= P5^4;                                                    /* 15W408AS  DIP16 Left 正置 */
-sbit OLED_SDA= P1^5;
-sbit OLED_RST= P1^4;
-sbit OLED_DC = P1^3;
-sbit OLED_CS = P1^2;
-#endif
-
-#define OLED_SCL_0    OLED_SCL = 0
-#define OLED_SCL_1    OLED_SCL = 1
-#define OLED_SDA_0    OLED_SDA = 0
-#define OLED_SDA_1    OLED_SDA = 1
-#define OLED_RST_0    OLED_RST = 0
-#define OLED_RST_1    OLED_RST = 1
-#define OLED_DC_0     OLED_DC = 0
-#define OLED_DC_1     OLED_DC = 1
-#define OLED_CS_0     OLED_CS = 0
-#define OLED_CS_1     OLED_CS = 1
-
-#else 
-/* OLED Pin Group 1*/
-//#define OLED_SCL_0    GPIO5->DR  &= ~(1 << 2)
-//#define OLED_SCL_1    GPIO5->DR  |=  (1 << 2)
-//#define OLED_SDA_0    GPIO3->DR  &= ~(1 << 4)
-//#define OLED_SDA_1    GPIO3->DR  |= (1 << 4)
-//#define OLED_RST_0    GPIO3->DR  &= ~(1 << 2)
-//#define OLED_RST_1    GPIO3->DR  |= (1 << 2)
-//#define OLED_DC_0     GPIO2->DR  &= ~(1 << 30)
-//#define OLED_DC_1     GPIO2->DR  |= (1 << 30)
-//#define OLED_CS_0     GPIO1->DR  &= ~(1 << 20)
-//#define OLED_CS_1     GPIO1->DR  |= (1 << 20)
-
-/* OLED Pin Group 2*/
-#define OLED_SCL_0    GPIO5->DR  &= ~(1 << 1)
-#define OLED_SCL_1    GPIO5->DR  |=  (1 << 1)
-#define OLED_SDA_0    GPIO3->DR  &= ~(1 << 5)
-#define OLED_SDA_1    GPIO3->DR  |= (1 << 5)
-#define OLED_RST_0    GPIO3->DR  &= ~(1 << 3)
-#define OLED_RST_1    GPIO3->DR  |= (1 << 3)
-#define OLED_DC_0     GPIO2->DR  &= ~(1 << 31)
-#define OLED_DC_1     GPIO2->DR  |= (1 << 31)
-#define OLED_CS_0     GPIO1->DR  &= ~(1 << 21)
-#define OLED_CS_1     GPIO1->DR  |= (1 << 21)
-#endif
 
 
 void OLED_Init(void);

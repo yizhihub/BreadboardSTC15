@@ -1,4 +1,6 @@
+#include "soft-spi.h"
 #include "boled.h"
+#include "font.h"
 //#include "fsl_snvs_hp.h"
 
 
@@ -30,13 +32,7 @@
 #define CHIP_SH1106
 #endif
 
-/*
- * slection between arm or 51 for const data 
- */
-#define CONST_DATA code
-
-
-
+/* ------------------------Display font definations------------------------ */
 //======================================================
 // 128X64I液晶底层驱动[8X16]字体库
 // 设计者: powerint
@@ -446,74 +442,28 @@ CONST_DATA unsigned char Scale1_8x128[]=
 };
 #endif
 
-void OLED_WrDat(unsigned char dat)
-{
-  unsigned char i=8;
-  OLED_CS_0;
-  OLED_DC_1;
- // NOP();NOP();NOP();NOP(); // yanshi
-  OLED_SCL_0;;
- // NOP();NOP();NOP();NOP(); // yanshi 
-  while(i--)
-  {
-    if(dat&0x80)            // 注意此处若为51单片机，采用CY位的方法速度略有提升。f = 340KHz -> 390KHz @12MHz
-	  {OLED_SDA_1;}
-    else
-	  {OLED_SDA_0;}
-	//NOP();NOP();// yanshi  
-    OLED_SCL_1;
-  //  NOP();NOP();// yanshi             
-    OLED_SCL_0;   
-  //  NOP();NOP();// yanshi     
-    dat<<=1;
-  }
-  OLED_CS_1;
-}
-void OLED_WrCmd(unsigned char cmd)
-{
-  unsigned char i;
-  OLED_CS_0;
-  OLED_DC_0;;
- // NOP();NOP();NOP();NOP(); // yanshi
-  OLED_SCL_0;;
- // NOP();NOP();NOP();NOP();// yanshi
-  for(i=0;i<8;i++)
-  {
-   if(cmd&0x80)
-	  OLED_SDA_1;
-   else
-	  OLED_SDA_0;
-  // NOP();NOP();//yanshi 
-   OLED_SCL_1;
-  // NOP();NOP();// yanshi   
-   OLED_SCL_0;
-  // NOP();NOP();// yanshi  
-   cmd<<=1;;  
-  } 	
-  OLED_CS_1;
-}
 void OLED_Set_Pos(unsigned char x, unsigned char y)
 { 
   #ifdef CHIP_SH1106
   x += 2;
   #endif
-  OLED_WrCmd(0xb0+y);
-  OLED_WrCmd(x&0x0f);
-  OLED_WrCmd(((x&0xf0)>>4)|0x10);
-  //OLED_WrCmd((x&0x0f)|0x01); 
+  SPI_WrCmd(0xb0+y);
+  SPI_WrCmd(x&0x0f);
+  SPI_WrCmd(((x&0xf0)>>4)|0x10);
+  //SPI_WrCmd((x&0x0f)|0x01); 
   // 这个错误会导致 OLED_P8x16Char(120,4,95) 函数会在下一列多写一竖线
 } 
 void OLED_PutPixel(uint8_t x,uint8_t y)
 {
     
-    OLED_WrCmd(0xb0+7-y/8);   //0xb0+0~7表示页0~页7?
+    SPI_WrCmd(0xb0+7-y/8);   //0xb0+0~7表示页0~页7?
     #ifdef CHIP_SH1106    //0x00+0~16表示将128列分成16组其地址在某组中的第几列
-    OLED_WrCmd(0x02 + x%16);
+    SPI_WrCmd(0x02 + x%16);
     #else 
-    OLED_WrCmd(0x00 + x%16);
+    SPI_WrCmd(0x00 + x%16);
     #endif  
-    OLED_WrCmd(0x10 + x/16);     //0x10+0~16表示将128列分成16组其地址所在第几组
-    OLED_WrDat(0x80>>(y%8));
+    SPI_WrCmd(0x10 + x/16);     //0x10+0~16表示将128列分成16组其地址所在第几组
+    SPI_WrDat(0x80>>(y%8));
 }
 void OLED_Fill(unsigned char bmp_dat)
 {
@@ -521,15 +471,15 @@ void OLED_Fill(unsigned char bmp_dat)
 	
 	for(y=0;y<8;y++)
 	{
-		OLED_WrCmd(0xb0+y);
+		SPI_WrCmd(0xb0+y);
         #ifdef CHIP_SH1106
-        OLED_WrCmd(0x02);
+        SPI_WrCmd(0x02);
         #else 
-		OLED_WrCmd(0x00);
+		SPI_WrCmd(0x00);
         #endif
-		OLED_WrCmd(0x10);
+		SPI_WrCmd(0x10);
 		for(x=0;x<X_WIDTH;x++)
-			OLED_WrDat(bmp_dat);
+			SPI_WrDat(bmp_dat);
 	}
 }
 void OLED_CLS(void)
@@ -537,15 +487,15 @@ void OLED_CLS(void)
 	unsigned char y,x;	
 	for(y=0;y<8;y++)
 	{
-		OLED_WrCmd(0xb0+y);
+		SPI_WrCmd(0xb0+y);
         #ifdef CHIP_SH1106
-        OLED_WrCmd(0x02);
+        SPI_WrCmd(0x02);
         #else 
-		OLED_WrCmd(0x00);
+		SPI_WrCmd(0x00);
         #endif
-		OLED_WrCmd(0x10); 
+		SPI_WrCmd(0x10); 
 		for(x=0;x<X_WIDTH;x++)
-			OLED_WrDat(0);
+			SPI_WrDat(0);
 	}
 }
 
@@ -561,44 +511,44 @@ void OLED_Init(void)
 
     //从上电到下面开始初始化要有足够的时间，即等待RC复位完毕   
 
-    OLED_WrCmd(0xae);//--turn off oled panel
-    OLED_WrCmd(0x00);//---set low column address,notice the start column is 0x02 when it's SH1106,but don't care here.
-    OLED_WrCmd(0x10);//---set high column address
-    OLED_WrCmd(0x40);//--set start line address  Set Mapping RAM Display Start Line (0x00~0x3F)
-    OLED_WrCmd(0xb0);//set page address
-    OLED_WrCmd(0x81);//--set contrast control register
-    OLED_WrCmd(Brightness); // Set SEG Output Current Brightness
-    OLED_WrCmd(Landscope);//--Set SEG/Column Mapping     0xa0左右反置 0xa1正常
-    OLED_WrCmd(Verticall);//Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
-    OLED_WrCmd(0xa6);//--set normal display
-    OLED_WrCmd(0xa8);//--set multiplex ratio(1 to 64)
-    OLED_WrCmd(0x3f);//--1/64 duty
-    OLED_WrCmd(0xd3);//-set display offset	Shift Mapping RAM Counter (0x00~0x3F)
-    OLED_WrCmd(0x00);//-not offset
-    OLED_WrCmd(0xd5);//--set display clock divide ratio/oscillator frequency
-    OLED_WrCmd(0x80);//--set divide ratio, Set Clock as 100 Frames/Sec
-    OLED_WrCmd(0xd9);//--set pre-charge period
-    OLED_WrCmd(0xf1);//Set Pre-Charge as 15 Clocks & Discharge as 1 Clock
-    OLED_WrCmd(0xda);//--set com pins hardware configuration
-    OLED_WrCmd(0x12);
-    OLED_WrCmd(0xdb);//--set vcomh
-    OLED_WrCmd(0x40);//Set VCOM Deselect Level
+    SPI_WrCmd(0xae);//--turn off oled panel
+    SPI_WrCmd(0x00);//---set low column address,notice the start column is 0x02 when it's SH1106,but don't care here.
+    SPI_WrCmd(0x10);//---set high column address
+    SPI_WrCmd(0x40);//--set start line address  Set Mapping RAM Display Start Line (0x00~0x3F)
+    SPI_WrCmd(0xb0);//set page address
+    SPI_WrCmd(0x81);//--set contrast control register
+    SPI_WrCmd(Brightness); // Set SEG Output Current Brightness
+    SPI_WrCmd(Landscope);//--Set SEG/Column Mapping     0xa0左右反置 0xa1正常
+    SPI_WrCmd(Verticall);//Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
+    SPI_WrCmd(0xa6);//--set normal display
+    SPI_WrCmd(0xa8);//--set multiplex ratio(1 to 64)
+    SPI_WrCmd(0x3f);//--1/64 duty
+    SPI_WrCmd(0xd3);//-set display offset	Shift Mapping RAM Counter (0x00~0x3F)
+    SPI_WrCmd(0x00);//-not offset
+    SPI_WrCmd(0xd5);//--set display clock divide ratio/oscillator frequency
+    SPI_WrCmd(0x80);//--set divide ratio, Set Clock as 100 Frames/Sec
+    SPI_WrCmd(0xd9);//--set pre-charge period
+    SPI_WrCmd(0xf1);//Set Pre-Charge as 15 Clocks & Discharge as 1 Clock
+    SPI_WrCmd(0xda);//--set com pins hardware configuration
+    SPI_WrCmd(0x12);
+    SPI_WrCmd(0xdb);//--set vcomh
+    SPI_WrCmd(0x40);//Set VCOM Deselect Level
 
     /*
     * there are diffierent register config between SSD1306 and SH1106
     */
     #ifdef CHIP_SH1106
-    OLED_WrCmd(0xad);
-    OLED_WrCmd(0x8b);
-    OLED_WrCmd(0x33);
+    SPI_WrCmd(0xad);
+    SPI_WrCmd(0x8b);
+    SPI_WrCmd(0x33);
     #endif
-    //OLED_WrCmd(0x20);//-Set Page Addressing Mode (0x00/0x01/0x02)
-    //OLED_WrCmd(0x02);//
-    //OLED_WrCmd(0xa4);// Disable Entire Display On (0xa4/0xa5)
-    //OLED_WrCmd(0xa6);// Disable Inverse Display On (0xa6/a7) 
-    OLED_WrCmd(0x8d);//--set Charge Pump enable/disable
-    OLED_WrCmd(0x14);//--set(0x10) disable
-    OLED_WrCmd(0xaf);//--turn on oled panel
+    //SPI_WrCmd(0x20);//-Set Page Addressing Mode (0x00/0x01/0x02)
+    //SPI_WrCmd(0x02);//
+    //SPI_WrCmd(0xa4);// Disable Entire Display On (0xa4/0xa5)
+    //SPI_WrCmd(0xa6);// Disable Inverse Display On (0xa6/a7) 
+    SPI_WrCmd(0x8d);//--set Charge Pump enable/disable
+    SPI_WrCmd(0x14);//--set(0x10) disable
+    SPI_WrCmd(0xaf);//--turn on oled panel
     OLED_Fill(0x00);  //初始清屏
     OLED_Set_Pos(0,0); 	
 } 
@@ -616,7 +566,7 @@ void OLED_P6x8Char(uint8_t x,uint8_t y,char m)
      }
     OLED_Set_Pos(x,y);
     for(i=0;i<6;i++)
-    OLED_WrDat(F6x8[m-32][i]);
+    SPI_WrDat(F6x8[m-32][i]);
 }
 //==============================================================
 //函数名：OLED_P6x8Str(unsigned char x,unsigned char y,unsigned char *p)
@@ -635,12 +585,12 @@ void OLED_P6x8Str(uint8_t x,uint8_t y,uint8_t ch[],uint8_t yn)
 		  x=0;y++;
 		  if(y>7) return;
 		}
-        OLED_Set_Pos(x,y);    
+        OLED_Set_Pos(x,y);
         for(i=0;i<6;i++) 
         {  if(yn)
-            OLED_WrDat(F6x8[c][i]); 
+            SPI_WrDat(F6x8[c][i]);
            else
-            OLED_WrDat(~F6x8[c][i]);  
+            SPI_WrDat(~F6x8[c][i]);  
         }
         x+=6;
         j++;
@@ -807,10 +757,10 @@ void OLED_P8x16Char(uint8_t x,uint8_t y,uint8_t wan)
     uint8_t i;
     OLED_Set_Pos(x,y);                 
     for(i=0;i<8;i++)
-    OLED_WrDat(F8X16[(wan-32)*16+i]);
+    SPI_WrDat(F8X16[(wan-32)*16+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<8;i++)
-    OLED_WrDat(F8X16[(wan-32)*16+i+8]); 
+    SPI_WrDat(F8X16[(wan-32)*16+i+8]); 
 }
 //==m============================================================
 //函数名：OLED_P8x16Str(uint8_t x,uint8_t y,uint8_t *p)
@@ -836,17 +786,17 @@ void OLED_P8x16Str(uint8_t x,uint8_t y,uint8_t ch[],uint8_t yn)
         for(i=0;i<8;i++)   
         { 
           if(yn)
-            OLED_WrDat(F8X16[c*16+i]);
+            SPI_WrDat(F8X16[c*16+i]);
           else
-            OLED_WrDat(~F8X16[c*16+i]);   
+            SPI_WrDat(~F8X16[c*16+i]);   
         }
         OLED_Set_Pos(x,y+1);    
         for(i=0;i<8;i++)     
         { 
            if(yn)
-          OLED_WrDat(F8X16[c*16+i+8]);  
+          SPI_WrDat(F8X16[c*16+i+8]);  
           else
-          OLED_WrDat(~F8X16[c*16+i+8]);  
+          SPI_WrDat(~F8X16[c*16+i+8]);  
         }
         x+=8;
         j++; 
@@ -899,10 +849,10 @@ void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUni
     {
         OLED_Set_Pos(x,y);                 
         for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[13*16+i]);
+        SPI_WrDat(F8X16[13*16+i]);
         OLED_Set_Pos(x,y+1);
         for(i=0;i<8;i++)
-        OLED_WrDat(F8X16[13*16+i+8]);  // 写负号 
+        SPI_WrDat(F8X16[13*16+i+8]);  // 写负号 
         m=-m;
         x+=8;
     } 
@@ -1177,13 +1127,13 @@ void OLED_P14x16Ch(unsigned char x,unsigned char y,unsigned char N)
   	OLED_Set_Pos(x , y);
   	for(wm = 0;wm < 14;wm++)               
   	{
-  		OLED_WrDat(F14x16b[adder]);	
+  		SPI_WrDat(F14x16b[adder]);	
   		adder += 1;
   	}      
   	OLED_Set_Pos(x,y + 1); 
   	for(wm = 0;wm < 14;wm++)          
   	{
-  		OLED_WrDat(F14x16b[adder]);
+  		SPI_WrDat(F14x16b[adder]);
   		adder += 1;
   	} 	  	
 }
@@ -1225,13 +1175,13 @@ void OLED_P14x16Ch(uint8_t x,uint8_t y,uint8_t ch[])
 						 // OLED_Set_Pos(x , y); // I think this sentenc is useless then annotate it！ yizhi 
 							for(wm = 0;wm < 14;wm++)               
 							{
-											OLED_WrDat(F14x16[adder]);	
+											SPI_WrDat(F14x16[adder]);	
 											adder += 1; // 每次写8位 
 							}      
 							OLED_Set_Pos(x,y + 1); 
 							for(wm = 0;wm < 14;wm++)          
 							{
-											OLED_WrDat(F14x16[adder]);
+											SPI_WrDat(F14x16[adder]);
 											adder += 1; // 每次写8位
 							}   		
 			}
@@ -1242,12 +1192,12 @@ void OLED_P14x16Ch(uint8_t x,uint8_t y,uint8_t ch[])
 			      	adder=0;
 							for(wm = 0;wm < 14;wm++) // I change the 16 to 14  yizhi 
 							{
-									OLED_WrDat(Nozimo[adder++]);
+									SPI_WrDat(Nozimo[adder++]);
 							}
 							OLED_Set_Pos(x,y + 1);
 							for(wm = 0;wm < 14;wm++)
 							{   		
-									OLED_WrDat(Nozimo[adder++]);	
+									SPI_WrDat(Nozimo[adder++]);	
 							}
 			}
 			x += 14;
@@ -1271,13 +1221,13 @@ void OLED_P16x16Str(uint8_t x,uint8_t y,const uint8_t ch[][32],uint8_t len)
         OLED_Set_Pos(x+i*16,y); 
         for(j = 0;j < 16;j++) //               
         {
-                OLED_WrDat(ch[i][adder]);	
+                SPI_WrDat(ch[i][adder]);	
                 adder += 1;  
         }      
         OLED_Set_Pos(x+i*16,y + 1); 
         for(j = 0;j < 16;j++)          
         {
-                OLED_WrDat(ch[i][adder]);
+                SPI_WrDat(ch[i][adder]);
                 adder += 1; 
         }  
    }
@@ -1344,32 +1294,32 @@ void OLED_P16x32Num(uint8_t p,int num,uint8_t unit)
   {
     OLED_Set_Pos(x,y);                  //write "wan"
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[wan*64+i]);
+      SPI_WrDat(F16X32[wan*64+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[wan*64+i+16]); 
+      SPI_WrDat(F16X32[wan*64+i+16]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[wan*64+i+32]); 
+      SPI_WrDat(F16X32[wan*64+i+32]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[wan*64+i+48]); 
+      SPI_WrDat(F16X32[wan*64+i+48]); 
     x+=16;
   }    
   if(qian!=0 || wan != 0)
   {
     OLED_Set_Pos(x,y);                  //write "qian"
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[qian*64+i]);
+      SPI_WrDat(F16X32[qian*64+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[qian*64+i+16]); 
+      SPI_WrDat(F16X32[qian*64+i+16]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[qian*64+i+32]); 
+      SPI_WrDat(F16X32[qian*64+i+32]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[qian*64+i+48]); 
+      SPI_WrDat(F16X32[qian*64+i+48]); 
     x+=16;
   }
   
@@ -1377,57 +1327,57 @@ void OLED_P16x32Num(uint8_t p,int num,uint8_t unit)
   {
      OLED_Set_Pos(x,y);                  //write "bai"
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[bai*64+i]);
+      SPI_WrDat(F16X32[bai*64+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[bai*64+i+16]); 
+      SPI_WrDat(F16X32[bai*64+i+16]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[bai*64+i+32]); 
+      SPI_WrDat(F16X32[bai*64+i+32]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[bai*64+i+48]); 
+      SPI_WrDat(F16X32[bai*64+i+48]); 
     x+=16;
   }
   OLED_Set_Pos(x,y);                  //write "shi"
   for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[shi*64+i]);
+    SPI_WrDat(F16X32[shi*64+i]);
   OLED_Set_Pos(x,y+1);
   for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[shi*64+i+16]); 
+    SPI_WrDat(F16X32[shi*64+i+16]); 
   OLED_Set_Pos(x,y+2);
   for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[shi*64+i+32]); 
+    SPI_WrDat(F16X32[shi*64+i+32]); 
   OLED_Set_Pos(x,y+3);
   for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[shi*64+i+48]); 
+    SPI_WrDat(F16X32[shi*64+i+48]); 
   x+=16;
   
   OLED_Set_Pos(x,y);                  //write "dot"
   for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[18*64+i]);
+    SPI_WrDat(F16X32[18*64+i]);
   OLED_Set_Pos(x,y+1);
   for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[18*64+i+16]); 
+    SPI_WrDat(F16X32[18*64+i+16]); 
   OLED_Set_Pos(x,y+2);
   for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[18*64+i+32]); 
+    SPI_WrDat(F16X32[18*64+i+32]); 
   OLED_Set_Pos(x,y+3);
   for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[18*64+i+48]); 
+    SPI_WrDat(F16X32[18*64+i+48]); 
   x+=16;
   OLED_Set_Pos(x,y);                  //write "ge"
   for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge*64+i]);
+    SPI_WrDat(F16X32[ge*64+i]);
   OLED_Set_Pos(x,y+1);
   for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge*64+i+16]); 
+    SPI_WrDat(F16X32[ge*64+i+16]); 
   OLED_Set_Pos(x,y+2);
   for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge*64+i+32]); 
+    SPI_WrDat(F16X32[ge*64+i+32]); 
   OLED_Set_Pos(x,y+3);
   for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge*64+i+48]); 
+    SPI_WrDat(F16X32[ge*64+i+48]); 
   x+=16;
   switch(unit)
   {
@@ -1436,75 +1386,75 @@ void OLED_P16x32Num(uint8_t p,int num,uint8_t unit)
   case 1 :
     OLED_Set_Pos(x,y);                  //write 'C
     for(i=0;i<32;i++)
-      OLED_WrDat(F16X32[10*64+i]);
+      SPI_WrDat(F16X32[10*64+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<32;i++)
-      OLED_WrDat(F16X32[10*64+i+32]); 
+      SPI_WrDat(F16X32[10*64+i+32]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<32;i++)
-      OLED_WrDat(F16X32[10*64+i+64]); 
+      SPI_WrDat(F16X32[10*64+i+64]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<32;i++)
-      OLED_WrDat(F16X32[10*64+i+96]); 
+      SPI_WrDat(F16X32[10*64+i+96]); 
     x+=32;//x+=16; 
     break;
   case 2 :
     OLED_Set_Pos(x,y);                  //write V
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[12*64+i]);
+      SPI_WrDat(F16X32[12*64+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[12*64+i+16]); 
+      SPI_WrDat(F16X32[12*64+i+16]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[12*64+i+32]); 
+      SPI_WrDat(F16X32[12*64+i+32]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[12*64+i+48]); 
+      SPI_WrDat(F16X32[12*64+i+48]); 
     x+=16;
     break;
   case 3 :
     OLED_Set_Pos(x,y);                  //write A
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[14*64+i]);
+      SPI_WrDat(F16X32[14*64+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[14*64+i+16]); 
+      SPI_WrDat(F16X32[14*64+i+16]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[14*64+i+32]); 
+      SPI_WrDat(F16X32[14*64+i+32]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[14*64+i+48]); 
+      SPI_WrDat(F16X32[14*64+i+48]); 
     x+=16;
     break;
   case 4 :
     OLED_Set_Pos(x,y);                  //write cm
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[16*64+i]);
+      SPI_WrDat(F16X32[16*64+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[16*64+i+16]); 
+      SPI_WrDat(F16X32[16*64+i+16]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[16*64+i+32]); 
+      SPI_WrDat(F16X32[16*64+i+32]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[16*64+i+48]);
+      SPI_WrDat(F16X32[16*64+i+48]);
     x+=16;
     
     OLED_Set_Pos(x,y);                 
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[16*64+i+64]);
+      SPI_WrDat(F16X32[16*64+i+64]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[16*64+i+80]); 
+      SPI_WrDat(F16X32[16*64+i+80]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[16*64+i+96]); 
+      SPI_WrDat(F16X32[16*64+i+96]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-      OLED_WrDat(F16X32[16*64+i+112]); 
+      SPI_WrDat(F16X32[16*64+i+112]); 
     x+=16;
     
     break;
@@ -1514,16 +1464,16 @@ void OLED_P16x32Num(uint8_t p,int num,uint8_t unit)
   {
     OLED_Set_Pos(x,y);                 
     for(i=0;i<16;i++)
-      OLED_WrDat(0x00);
+      SPI_WrDat(0x00);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-      OLED_WrDat(0x00); 
+      SPI_WrDat(0x00); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-      OLED_WrDat(0x00); 
+      SPI_WrDat(0x00); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-      OLED_WrDat(0x00); 
+      SPI_WrDat(0x00); 
     x+=16;
   }
 }
@@ -1542,136 +1492,136 @@ void OLED_P16x32Time(uint8_t p, RTC_Time_s *ptTime)
     ge = (ptTime->hour / 10)*64;
     OLED_Set_Pos(x,y);                 
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i]);
+    SPI_WrDat(F16X32[ge+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+16]); 
+    SPI_WrDat(F16X32[ge+i+16]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+32]); 
+    SPI_WrDat(F16X32[ge+i+32]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+48]); 
+    SPI_WrDat(F16X32[ge+i+48]); 
     x+=16;
 
     ge = (ptTime->hour % 10)*64;
     OLED_Set_Pos(x,y);                 
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i]);
+    SPI_WrDat(F16X32[ge+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+16]); 
+    SPI_WrDat(F16X32[ge+i+16]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+32]); 
+    SPI_WrDat(F16X32[ge+i+32]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+48]); 
+    SPI_WrDat(F16X32[ge+i+48]); 
     x+=16;
     
     OLED_Set_Pos(x,y);                  //write "dot"
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[20*64+i]);
+    SPI_WrDat(F16X32[20*64+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[20*64+i+16]); 
+    SPI_WrDat(F16X32[20*64+i+16]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[20*64+i+32]); 
+    SPI_WrDat(F16X32[20*64+i+32]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[20*64+i+48]); 
+    SPI_WrDat(F16X32[20*64+i+48]); 
     x+=16;
     
     ge = (ptTime->minute / 10)*64;
     OLED_Set_Pos(x,y);                 
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i]);
+    SPI_WrDat(F16X32[ge+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+16]); 
+    SPI_WrDat(F16X32[ge+i+16]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+32]); 
+    SPI_WrDat(F16X32[ge+i+32]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+48]); 
+    SPI_WrDat(F16X32[ge+i+48]); 
     x+=16;
 
     ge = (ptTime->minute % 10)*64;
     OLED_Set_Pos(x,y);                 
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i]);
+    SPI_WrDat(F16X32[ge+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+16]); 
+    SPI_WrDat(F16X32[ge+i+16]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+32]); 
+    SPI_WrDat(F16X32[ge+i+32]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+48]); 
+    SPI_WrDat(F16X32[ge+i+48]); 
     x+=16;
     
     
     OLED_Set_Pos(x,y);                  //write "dot"
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[20*64+i]);
+    SPI_WrDat(F16X32[20*64+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[20*64+i+16]); 
+    SPI_WrDat(F16X32[20*64+i+16]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[20*64+i+32]); 
+    SPI_WrDat(F16X32[20*64+i+32]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[20*64+i+48]); 
+    SPI_WrDat(F16X32[20*64+i+48]); 
     x+=16;
     
     ge = (ptTime->second / 10)*64;
     OLED_Set_Pos(x,y);                 
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i]);
+    SPI_WrDat(F16X32[ge+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+16]); 
+    SPI_WrDat(F16X32[ge+i+16]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+32]); 
+    SPI_WrDat(F16X32[ge+i+32]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+48]); 
+    SPI_WrDat(F16X32[ge+i+48]); 
     x+=16;
 
     ge = (ptTime->second % 10)*64;
     OLED_Set_Pos(x,y);                 
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i]);
+    SPI_WrDat(F16X32[ge+i]);
     OLED_Set_Pos(x,y+1);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+16]); 
+    SPI_WrDat(F16X32[ge+i+16]); 
     OLED_Set_Pos(x,y+2);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+32]); 
+    SPI_WrDat(F16X32[ge+i+32]); 
     OLED_Set_Pos(x,y+3);
     for(i=0;i<16;i++)
-    OLED_WrDat(F16X32[ge+i+48]); 
+    SPI_WrDat(F16X32[ge+i+48]); 
     x+=16;
      
     while(x<112)  // 空余位清零 
     {
         OLED_Set_Pos(x,y);                 
         for(i=0;i<16;i++)
-        OLED_WrDat(0x00);
+        SPI_WrDat(0x00);
         OLED_Set_Pos(x,y+1);
         for(i=0;i<16;i++)
-        OLED_WrDat(0x00); 
+        SPI_WrDat(0x00); 
         OLED_Set_Pos(x,y+2);
         for(i=0;i<16;i++)
-        OLED_WrDat(0x00); 
+        SPI_WrDat(0x00); 
         OLED_Set_Pos(x,y+3);
         for(i=0;i<16;i++)
-        OLED_WrDat(0x00); 
+        SPI_WrDat(0x00); 
         x+=16;
     }
 }
@@ -1715,7 +1665,7 @@ void OLED_DrawBMP(uint8_t x0,uint8_t y0,uint8_t x1,uint8_t y1)
         OLED_Set_Pos(x0,y);				
         for(x=x0;x<x1;x++)
         {      
-            OLED_WrDat(Scale1_8x128[ii++]);	    	
+            SPI_WrDat(Scale1_8x128[ii++]);	    	
         }
     }
 //	for(i=0;i<128;i++)

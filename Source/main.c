@@ -1,6 +1,7 @@
 #include "common.h"
 #include "isr.h"
 #include "boled.h"
+#include "bLCD.h"
 #include "bkey.h"
 #include "bSHT3x.h"
 #include "uart.h"
@@ -47,6 +48,29 @@ void port_init(void)
 
 void main(void)
 {
+#if 0
+	KEYn_e eKeyPress;
+	unsigned short data COLOR = 30;
+	  port_init();
+	
+     LCD_Init();//LCD初始化
+	  UART1_Init(timer2);    
+	//LCD_Fill(0,0,LCD_W,LCD_H,0X8F00);
+	while(1)
+	{
+//		msDelay(5);
+		LCD_Fill(0,0,LCD_W,LCD_H,COLOR); 
+		eKeyPress = ADKey_Check();
+//		if (eKeyPress == KEY_UP) {
+		    COLOR++;
+//	    }  else if (eKeyPress == KEY_DOWN) {
+//			COLOR--;
+//	    }
+		UART_Print(uart1, "The value:", 1,0,0,COLOR);
+		
+	}
+#else
+
     int16_t data sSpeedSet = 0, sSpdAct;
     float   data fVolAct;
     uint16_t data sVccPower, sVbgMv, sTimeCnt1 = 0;
@@ -62,6 +86,8 @@ void main(void)
     EA = 0;
     port_init();
     msDelay(50);       // OLED上电后延迟50ms
+	
+#if 0
     OLED_Init(); 
     OLED_Fill(0xFF);   // FullRefresh time = 18.977ms @24MHz
 #if defined(FEATURE_F8x16)
@@ -69,6 +95,20 @@ void main(void)
     OLED_P8x16Str(32, 4, pcVerStr1, 0);
     OLED_P8x16Str(16, 6, pcVerStr2, 0);
 #endif
+
+#else
+	LCD_Init();
+	LCD_Fill(0,0,LCD_W,LCD_H,BCOLOR); 
+	msDelay(500);
+#if defined(FEATURE_F8x16)
+    LCD_ShowString(0, 0, cVerID, FCOLOR, BCOLOR, 8, 0);
+    LCD_ShowString(32, 47, pcVerStr1, RED, BCOLOR, 8, 0);
+    LCD_ShowString(16, 63, pcVerStr2, BLUE, BCOLOR, 8, 0);
+#endif
+#endif
+
+    while (1);
+	
     msDelay(1500);
     OLED_Fill(0x00);
     
@@ -81,7 +121,7 @@ void main(void)
     OLED_Print(0, 4, "当前转速:-----RPM");
     OLED_Print(0, 6, "设定转速:-----RPM");
 #endif
-    
+
 	AUXR &= 0x7F;			//定时器时钟12T模式
 	TMOD &= 0xF0;			//设置定时器模式
 	TL0 = 0xF0;				//设置定时初始值
@@ -194,6 +234,8 @@ void main(void)
         }
         FMSTR_Poll();
     }
+	
+#endif
 }
 
 
