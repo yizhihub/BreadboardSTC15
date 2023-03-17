@@ -1,38 +1,13 @@
 #include "soft-spi.h"
 #include "boled.h"
-#include "font.h"
+#include "bLCD.h"
 //#include "fsl_snvs_hp.h"
 
 
-#define XLevelL		0x00
-#define XLevelH		0x10
-#define XLevel		((XLevelH&0x0F)*16+XLevelL)
-#define Max_Column	128
-#define Max_Row		64
-#define Landscope   0xa0     // Set SEG/Column Mapping       0xa0左右反置 0xa1正常
-#define Verticall   0xc0     // Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
-#define	Brightness	0xF0 
-#define X_WIDTH 128
-#define Y_WIDTH 64
 
-/*
- * 显示屏正置
- */
-#if defined(STC15W408ASDIP16)
-#undef Landscope
-#undef Verticall
-#define Landscope   0xa1     // Set SEG/Column Mapping       0xa0左右反置 0xa1正常
-#define Verticall   0xc8     // Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
-#endif
+u16 BACK_COLOR = WHITE;
+u16 FRONT_COLOR = WHITE;
 
-/*
- * slection between SS1306 or SH1106
- */
-#if defined(IC_Deprecated)
-#define CHIP_SH1106
-#endif
-
-/* ------------------------Display font definations------------------------ */
 //======================================================
 // 128X64I液晶底层驱动[8X16]字体库
 // 设计者: powerint
@@ -141,6 +116,105 @@ CONST_DATA unsigned char F8X16[]={
   0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
 };
 #endif
+#if defined(CHIP_SSD1331) || defined(CHIP_SSD1351)
+CONST_DATA unsigned char asc2_1608[1520]={
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+0x00,0x00,0x00,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x00,0x00,0x18,0x18,0x00,0x00,
+0x00,0x48,0x6C,0x24,0x12,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+0x00,0x00,0x00,0x24,0x24,0x24,0x7F,0x12,0x12,0x12,0x7F,0x12,0x12,0x12,0x00,0x00,
+0x00,0x00,0x08,0x1C,0x2A,0x2A,0x0A,0x0C,0x18,0x28,0x28,0x2A,0x2A,0x1C,0x08,0x08,
+0x00,0x00,0x00,0x22,0x25,0x15,0x15,0x15,0x2A,0x58,0x54,0x54,0x54,0x22,0x00,0x00,
+0x00,0x00,0x00,0x0C,0x12,0x12,0x12,0x0A,0x76,0x25,0x29,0x11,0x91,0x6E,0x00,0x00,
+0x00,0x06,0x06,0x04,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+0x00,0x40,0x20,0x10,0x10,0x08,0x08,0x08,0x08,0x08,0x08,0x10,0x10,0x20,0x40,0x00,
+0x00,0x02,0x04,0x08,0x08,0x10,0x10,0x10,0x10,0x10,0x10,0x08,0x08,0x04,0x02,0x00,
+0x00,0x00,0x00,0x00,0x08,0x08,0x6B,0x1C,0x1C,0x6B,0x08,0x08,0x00,0x00,0x00,0x00,
+0x00,0x00,0x00,0x00,0x08,0x08,0x08,0x08,0x7F,0x08,0x08,0x08,0x08,0x00,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x06,0x04,0x03,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFE,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x06,0x00,0x00,
+0x00,0x00,0x80,0x40,0x40,0x20,0x20,0x10,0x10,0x08,0x08,0x04,0x04,0x02,0x02,0x00,
+0x00,0x00,0x00,0x18,0x24,0x42,0x42,0x42,0x42,0x42,0x42,0x42,0x24,0x18,0x00,0x00,
+0x00,0x00,0x00,0x08,0x0E,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x3E,0x00,0x00,
+0x00,0x00,0x00,0x3C,0x42,0x42,0x42,0x20,0x20,0x10,0x08,0x04,0x42,0x7E,0x00,0x00,
+0x00,0x00,0x00,0x3C,0x42,0x42,0x20,0x18,0x20,0x40,0x40,0x42,0x22,0x1C,0x00,0x00,
+0x00,0x00,0x00,0x20,0x30,0x28,0x24,0x24,0x22,0x22,0x7E,0x20,0x20,0x78,0x00,0x00,
+0x00,0x00,0x00,0x7E,0x02,0x02,0x02,0x1A,0x26,0x40,0x40,0x42,0x22,0x1C,0x00,0x00,
+0x00,0x00,0x00,0x38,0x24,0x02,0x02,0x1A,0x26,0x42,0x42,0x42,0x24,0x18,0x00,0x00,
+0x00,0x00,0x00,0x7E,0x22,0x22,0x10,0x10,0x08,0x08,0x08,0x08,0x08,0x08,0x00,0x00,
+0x00,0x00,0x00,0x3C,0x42,0x42,0x42,0x24,0x18,0x24,0x42,0x42,0x42,0x3C,0x00,0x00,
+0x00,0x00,0x00,0x18,0x24,0x42,0x42,0x42,0x64,0x58,0x40,0x40,0x24,0x1C,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x18,0x18,0x00,0x00,0x00,0x00,0x18,0x18,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x00,0x00,0x00,0x00,0x00,0x08,0x08,0x04,
+0x00,0x00,0x00,0x40,0x20,0x10,0x08,0x04,0x02,0x04,0x08,0x10,0x20,0x40,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x7F,0x00,0x00,0x00,0x7F,0x00,0x00,0x00,0x00,0x00,
+0x00,0x00,0x00,0x02,0x04,0x08,0x10,0x20,0x40,0x20,0x10,0x08,0x04,0x02,0x00,0x00,
+0x00,0x00,0x00,0x3C,0x42,0x42,0x46,0x40,0x20,0x10,0x10,0x00,0x18,0x18,0x00,0x00,
+0x00,0x00,0x00,0x1C,0x22,0x5A,0x55,0x55,0x55,0x55,0x2D,0x42,0x22,0x1C,0x00,0x00,
+0x00,0x00,0x00,0x08,0x08,0x18,0x14,0x14,0x24,0x3C,0x22,0x42,0x42,0xE7,0x00,0x00,
+0x00,0x00,0x00,0x1F,0x22,0x22,0x22,0x1E,0x22,0x42,0x42,0x42,0x22,0x1F,0x00,0x00,
+0x00,0x00,0x00,0x7C,0x42,0x42,0x01,0x01,0x01,0x01,0x01,0x42,0x22,0x1C,0x00,0x00,
+0x00,0x00,0x00,0x1F,0x22,0x42,0x42,0x42,0x42,0x42,0x42,0x42,0x22,0x1F,0x00,0x00,
+0x00,0x00,0x00,0x3F,0x42,0x12,0x12,0x1E,0x12,0x12,0x02,0x42,0x42,0x3F,0x00,0x00,
+0x00,0x00,0x00,0x3F,0x42,0x12,0x12,0x1E,0x12,0x12,0x02,0x02,0x02,0x07,0x00,0x00,
+0x00,0x00,0x00,0x3C,0x22,0x22,0x01,0x01,0x01,0x71,0x21,0x22,0x22,0x1C,0x00,0x00,
+0x00,0x00,0x00,0xE7,0x42,0x42,0x42,0x42,0x7E,0x42,0x42,0x42,0x42,0xE7,0x00,0x00,
+0x00,0x00,0x00,0x3E,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x3E,0x00,0x00,
+0x00,0x00,0x00,0x7C,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x11,0x0F,
+0x00,0x00,0x00,0x77,0x22,0x12,0x0A,0x0E,0x0A,0x12,0x12,0x22,0x22,0x77,0x00,0x00,
+0x00,0x00,0x00,0x07,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x02,0x42,0x7F,0x00,0x00,
+0x00,0x00,0x00,0x77,0x36,0x36,0x36,0x36,0x2A,0x2A,0x2A,0x2A,0x2A,0x6B,0x00,0x00,
+0x00,0x00,0x00,0xE3,0x46,0x46,0x4A,0x4A,0x52,0x52,0x52,0x62,0x62,0x47,0x00,0x00,
+0x00,0x00,0x00,0x1C,0x22,0x41,0x41,0x41,0x41,0x41,0x41,0x41,0x22,0x1C,0x00,0x00,
+0x00,0x00,0x00,0x3F,0x42,0x42,0x42,0x42,0x3E,0x02,0x02,0x02,0x02,0x07,0x00,0x00,
+0x00,0x00,0x00,0x1C,0x22,0x41,0x41,0x41,0x41,0x41,0x4D,0x53,0x32,0x1C,0x60,0x00,
+0x00,0x00,0x00,0x3F,0x42,0x42,0x42,0x3E,0x12,0x12,0x22,0x22,0x42,0xC7,0x00,0x00,
+0x00,0x00,0x00,0x7C,0x42,0x42,0x02,0x04,0x18,0x20,0x40,0x42,0x42,0x3E,0x00,0x00,
+0x00,0x00,0x00,0x7F,0x49,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x1C,0x00,0x00,
+0x00,0x00,0x00,0xE7,0x42,0x42,0x42,0x42,0x42,0x42,0x42,0x42,0x42,0x3C,0x00,0x00,
+0x00,0x00,0x00,0xE7,0x42,0x42,0x22,0x24,0x24,0x14,0x14,0x18,0x08,0x08,0x00,0x00,
+0x00,0x00,0x00,0x6B,0x49,0x49,0x49,0x49,0x55,0x55,0x36,0x22,0x22,0x22,0x00,0x00,
+0x00,0x00,0x00,0xE7,0x42,0x24,0x24,0x18,0x18,0x18,0x24,0x24,0x42,0xE7,0x00,0x00,
+0x00,0x00,0x00,0x77,0x22,0x22,0x14,0x14,0x08,0x08,0x08,0x08,0x08,0x1C,0x00,0x00,
+0x00,0x00,0x00,0x7E,0x21,0x20,0x10,0x10,0x08,0x04,0x04,0x42,0x42,0x3F,0x00,0x00,
+0x00,0x78,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x78,0x00,
+0x00,0x00,0x02,0x02,0x04,0x04,0x08,0x08,0x08,0x10,0x10,0x20,0x20,0x20,0x40,0x40,
+0x00,0x1E,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x1E,0x00,
+0x00,0x38,0x44,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,
+0x00,0x06,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x3C,0x42,0x78,0x44,0x42,0x42,0xFC,0x00,0x00,
+0x00,0x00,0x00,0x03,0x02,0x02,0x02,0x1A,0x26,0x42,0x42,0x42,0x26,0x1A,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x38,0x44,0x02,0x02,0x02,0x44,0x38,0x00,0x00,
+0x00,0x00,0x00,0x60,0x40,0x40,0x40,0x78,0x44,0x42,0x42,0x42,0x64,0xD8,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x3C,0x42,0x7E,0x02,0x02,0x42,0x3C,0x00,0x00,
+0x00,0x00,0x00,0xF0,0x88,0x08,0x08,0x7E,0x08,0x08,0x08,0x08,0x08,0x3E,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x7C,0x22,0x22,0x1C,0x02,0x3C,0x42,0x42,0x3C,
+0x00,0x00,0x00,0x03,0x02,0x02,0x02,0x3A,0x46,0x42,0x42,0x42,0x42,0xE7,0x00,0x00,
+0x00,0x00,0x00,0x0C,0x0C,0x00,0x00,0x0E,0x08,0x08,0x08,0x08,0x08,0x3E,0x00,0x00,
+0x00,0x00,0x00,0x30,0x30,0x00,0x00,0x38,0x20,0x20,0x20,0x20,0x20,0x20,0x22,0x1E,
+0x00,0x00,0x00,0x03,0x02,0x02,0x02,0x72,0x12,0x0A,0x16,0x12,0x22,0x77,0x00,0x00,
+0x00,0x00,0x00,0x0E,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x08,0x3E,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x7F,0x92,0x92,0x92,0x92,0x92,0xB7,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x3B,0x46,0x42,0x42,0x42,0x42,0xE7,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x3C,0x42,0x42,0x42,0x42,0x42,0x3C,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x1B,0x26,0x42,0x42,0x42,0x22,0x1E,0x02,0x07,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x78,0x44,0x42,0x42,0x42,0x44,0x78,0x40,0xE0,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x77,0x4C,0x04,0x04,0x04,0x04,0x1F,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x7C,0x42,0x02,0x3C,0x40,0x42,0x3E,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x08,0x08,0x3E,0x08,0x08,0x08,0x08,0x08,0x30,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x63,0x42,0x42,0x42,0x42,0x62,0xDC,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xE7,0x42,0x24,0x24,0x14,0x08,0x08,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xEB,0x49,0x49,0x55,0x55,0x22,0x22,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x76,0x24,0x18,0x18,0x18,0x24,0x6E,0x00,0x00,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xE7,0x42,0x24,0x24,0x14,0x18,0x08,0x08,0x07,
+0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x7E,0x22,0x10,0x08,0x08,0x44,0x7E,0x00,0x00,
+0x00,0xC0,0x20,0x20,0x20,0x20,0x20,0x10,0x20,0x20,0x20,0x20,0x20,0x20,0xC0,0x00,
+0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,0x10,
+0x00,0x06,0x08,0x08,0x08,0x08,0x08,0x10,0x08,0x08,0x08,0x08,0x08,0x08,0x06,0x00,
+0x0C,0x32,0xC2,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+#endif
 
 #ifdef FEATURE_F6x8
 CONST_DATA unsigned char F6x8[][6] =
@@ -242,7 +316,7 @@ CONST_DATA unsigned char F6x8[][6] =
 #endif
 
 #ifdef FEATURE_F16x32
-CONST_DATA unsigned char F16X32[][16]= 
+CONST_DATA unsigned char F16X32[]= 
 { 
   0x00,0x00,0x00,0x00,0x00,0x80,0xC0,0x40,0x40,0x40,0xC0,0x80,0x00,0x00,0x00,0x00,
   0x00,0x00,0xF0,0xFE,0x0F,0x01,0x00,0x00,0x00,0x00,0x00,0x01,0x07,0xFE,0xF0,0x00,
@@ -465,100 +539,260 @@ void OLED_PutPixel(uint8_t x,uint8_t y)
     SPI_WrCmd(0x10 + x/16);     //0x10+0~16表示将128列分成16组其地址所在第几组
     SPI_WrDat(0x80>>(y%8));
 }
-void OLED_Fill(unsigned char bmp_dat)
-{
-	unsigned char y,x;
-	
-	for(y=0;y<8;y++)
-	{
-		SPI_WrCmd(0xb0+y);
-        #ifdef CHIP_SH1106
-        SPI_WrCmd(0x02);
-        #else 
-		SPI_WrCmd(0x00);
-        #endif
-		SPI_WrCmd(0x10);
-		for(x=0;x<X_WIDTH;x++)
-			SPI_WrDat(bmp_dat);
-	}
-}
-void OLED_CLS(void)
-{
-	unsigned char y,x;	
-	for(y=0;y<8;y++)
-	{
-		SPI_WrCmd(0xb0+y);
-        #ifdef CHIP_SH1106
-        SPI_WrCmd(0x02);
-        #else 
-		SPI_WrCmd(0x00);
-        #endif
-		SPI_WrCmd(0x10); 
-		for(x=0;x<X_WIDTH;x++)
-			SPI_WrDat(0);
-	}
-}
 
+/******************************************************************************
+      函数说明：设置起始和结束地址
+      入口数据：x1,x2 设置列的起始和结束地址
+                y1,y2 设置行的起始和结束地址
+      返回值：  无
+******************************************************************************/
+//void LCD_Address_Set(u8 x1,u8 y1,u8 x2,u8 y2)
+//{
+//#if defined(CHIP_SSD1331)
+//    SPI_WrCmd(0x15);//列地址设置
+//    SPI_WrCmd(x1);
+//    SPI_WrCmd(x2);
+//    SPI_WrCmd(0x75);//行地址设置
+//    SPI_WrCmd(y1);
+//    SPI_WrCmd(y2);
+//#else
+//    SPI_WrCmd(0x15);//列地址设置
+//    SPI_WrDat(x1);
+//    SPI_WrDat(x2);
+//    SPI_WrCmd(0x75);//行地址设置
+//    SPI_WrDat(y1);
+//    SPI_WrDat(y2);
+//    SPI_WrCmd(0x5c);
+//#endif
+//}
+
+/******************************************************************************
+      函数说明：LCD显示汉字
+      入口数据：x,y   起始坐标
+      返回值：  无
+******************************************************************************/
+//void LCD_DrawPoint(u16 x,u16 y,u16 color)
+//{
+//    LCD_Address_Set(x,y,x,y);//设置光标位置 
+//    SPI_WrDat(color>>8);
+//    SPI_WrDat(color);
+//} 
+
+/******************************************************************************
+      函数说明：LCD显示汉字
+      入口数据：x,y   起始坐标
+                index 汉字的序号
+                size  字号
+      返回值：  无
+******************************************************************************/
+//void LCD_ShowChinese(u16 x,u16 y,u8 index,u8 size2,u16 color)
+//{  
+//	u8 i,j,x1=x;
+//	u8 *temp,size1;
+////	if(size2==16){temp=Hzk16;}//选择字号
+////	if(size2==32){temp=Hzk32;}
+//  LCD_Address_Set(x,y,x+size2-1,y+size2-1);//设置一个汉字的区域
+//  size1=size2*size2/8;//一个汉字所占的字节
+//	temp+=index*size1;//写入的起始位置
+//	for(j=0;j<size1;j++)
+//	{
+//		SPI_WrCmd(0xb0+y);
+//        #ifdef CHIP_SH1106
+//        SPI_WrCmd(0x02);
+//        #else 
+//		SPI_WrCmd(0x00);
+//        #endif
+//		SPI_WrCmd(0x10);
+//		for(x=0;x<OLED_WIDTH;x++)
+//			SPI_WrDat(color);
+//	}
+//}
+
+
+void OLED_Fill(unsigned int usData)
+{
+    unsigned char y,x;
+
+#if defined(CHIP_SSD1331) || defined(CHIP_SSD1351)
+    LCD_Address_Set(0,0,OLED_WIDTH - 1,OLED_HIGH-1);
+    for(x=0; x < OLED_HIGH; x++)
+    {
+        for (y=0; y < OLED_WIDTH; y++)
+        {
+            SPI_WrDat(usData >> 8);
+            SPI_WrDat(usData);
+        }
+    }
+#else
+//	for(y=0;y<8;y++)
+//	{
+//		SPI_WrCmd(0xb0+y);
+//        #ifdef CHIP_SH1106
+//        SPI_WrCmd(0x02);
+//        #else 
+//		SPI_WrCmd(0x00);
+//        #endif
+//		SPI_WrCmd(0x10);
+//		for(x=0;x<OLED_WIDTH;x++)
+//			SPI_WrDat(usData);
+//	}
+	LCD_Fill(0,0,LCD_W,LCD_H,usData); 
+#endif
+}
 void OLED_Init(void)        
 {  
     OLED_SCL_1;
-    //OLED_CS=1;	//预制SLK和SS为高电平  	
-
+    OLED_CS=1;    //预制SLK和SS为高电平
+    
     msDelay(1);
     OLED_RST_0;
-    msDelay(1);
+    msDelay(200);
     OLED_RST_1;
-
+    
+#ifdef CHIP_SSD1331
+    SPI_WrCmd(0xAE);
+    SPI_WrCmd(0xA0);
+    SPI_WrCmd(0x72);
+    SPI_WrCmd(0xA1);
+    SPI_WrCmd(0x00);
+    SPI_WrCmd(0xA2);
+    SPI_WrCmd(0x00);
+    SPI_WrCmd(0xA4);
+    SPI_WrCmd(0xA8);
+    SPI_WrCmd(0x3F);
+    SPI_WrCmd(0xAD);
+    SPI_WrCmd(0x8E);
+    SPI_WrCmd(0xB0);
+    SPI_WrCmd(0x0B);
+    SPI_WrCmd(0xB1);
+    SPI_WrCmd(0x31);
+    SPI_WrCmd(0xB3);
+    SPI_WrCmd(0xF0);
+    SPI_WrCmd(0x8A);
+    SPI_WrCmd(0x64);
+    SPI_WrCmd(0x8B);
+    SPI_WrCmd(0x78);
+    SPI_WrCmd(0x8C);
+    SPI_WrCmd(0x64);
+    SPI_WrCmd(0xBB);
+    SPI_WrCmd(0x3A);
+    SPI_WrCmd(0xBE);
+    SPI_WrCmd(0x3E);
+    SPI_WrCmd(0x87);
+    SPI_WrCmd(0x06);
+    SPI_WrCmd(0x81);
+    SPI_WrCmd(0x91);
+    SPI_WrCmd(0x82);
+    SPI_WrCmd(0x50);
+    SPI_WrCmd(0x83);
+    SPI_WrCmd(0x7D);
+    SPI_WrCmd(0xAF);
+    OLED_Fill(0x00);
+#elif defined(CHIP_SSD1351)
+    SPI_WrCmd(0xFD);
+    SPI_WrDat(0x12);
+    SPI_WrCmd(0xFD);
+    SPI_WrDat(0xB1);
+    SPI_WrCmd(0xAE);
+    SPI_WrCmd(0xB3);
+    SPI_WrDat(0xF1);
+    SPI_WrCmd(0xCA);
+    SPI_WrDat(0x7F);
+    SPI_WrCmd(0xA2);
+    SPI_WrDat(0x00);
+    SPI_WrCmd(0xA1);
+    SPI_WrDat(0x00);
+    SPI_WrCmd(0xA0);
+    SPI_WrDat(0x74);
+    SPI_WrCmd(0xB5);
+    SPI_WrDat(0x00);
+    SPI_WrCmd(0xAB);
+    SPI_WrDat(0x01);
+    SPI_WrCmd(0xB4);
+    SPI_WrDat(0xA0);
+    SPI_WrDat(0xB5);
+    SPI_WrDat(0x55);
+    SPI_WrCmd(0xC1);
+    SPI_WrDat(0xC8);
+    SPI_WrDat(0x80);
+    SPI_WrDat(0xC8);
+    SPI_WrCmd(0xC7);
+    SPI_WrDat(0x0F);
+    SPI_WrCmd(0xB1);
+    SPI_WrDat(0x32);
+    SPI_WrCmd(0xBB);
+    SPI_WrDat(0x17);
+    SPI_WrCmd(0xB2);
+    SPI_WrDat(0xA4);
+    SPI_WrDat(0x00);
+    SPI_WrDat(0x00);
+    SPI_WrCmd(0xB6);
+    SPI_WrDat(0x01);
+    SPI_WrCmd(0xBE);
+    SPI_WrDat(0x05);
+    SPI_WrCmd(0xA6);
+    SPI_WrCmd(0xAF);
+    OLED_Fill(0x00);
+#else 
     //从上电到下面开始初始化要有足够的时间，即等待RC复位完毕   
-
+    SPI_WrCmd(0xFD);// 待验证新增  SSD1306pass
+    SPI_WrCmd(0x12);// 待验证新增  SSD1306pass
     SPI_WrCmd(0xae);//--turn off oled panel
-    SPI_WrCmd(0x00);//---set low column address,notice the start column is 0x02 when it's SH1106,but don't care here.
-    SPI_WrCmd(0x10);//---set high column address
-    SPI_WrCmd(0x40);//--set start line address  Set Mapping RAM Display Start Line (0x00~0x3F)
-    SPI_WrCmd(0xb0);//set page address
-    SPI_WrCmd(0x81);//--set contrast control register
-    SPI_WrCmd(Brightness); // Set SEG Output Current Brightness
-    SPI_WrCmd(Landscope);//--Set SEG/Column Mapping     0xa0左右反置 0xa1正常
-    SPI_WrCmd(Verticall);//Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
-    SPI_WrCmd(0xa6);//--set normal display
+    SPI_WrCmd(0xd5);//--set display clock divide ratio/oscillator frequency
+    SPI_WrCmd(0xA0);// 待验证新增
+   
     SPI_WrCmd(0xa8);//--set multiplex ratio(1 to 64)
     SPI_WrCmd(0x3f);//--1/64 duty
     SPI_WrCmd(0xd3);//-set display offset	Shift Mapping RAM Counter (0x00~0x3F)
-    SPI_WrCmd(0x00);//-not offset
-    SPI_WrCmd(0xd5);//--set display clock divide ratio/oscillator frequency
+    SPI_WrCmd(0x00);//-not offset    
+    SPI_WrCmd(0x40);//--set start line address  Set Mapping RAM Display Start Line (0x00~0x3F)
+
+//    SPI_WrCmd(0xa6);//--set normal display  待验证可删 SSD1306pass 
+
+    SPI_WrCmd(Landscope);//--Set SEG/Column Mapping     0xa0左右反置 0xa1正常
+    SPI_WrCmd(Verticall);//Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
+    SPI_WrCmd(0xda);//--set com pins hardware configuration
+    SPI_WrCmd(0x12);
+    SPI_WrCmd(0x81);//--set contrast control register
+    SPI_WrCmd(Brightness); // Set SEG Output Current Brightness
+   
+#ifdef CHIP_SSD1306   
     SPI_WrCmd(0x80);//--set divide ratio, Set Clock as 100 Frames/Sec
     SPI_WrCmd(0xd9);//--set pre-charge period
     SPI_WrCmd(0xf1);//Set Pre-Charge as 15 Clocks & Discharge as 1 Clock
-    SPI_WrCmd(0xda);//--set com pins hardware configuration
-    SPI_WrCmd(0x12);
     SPI_WrCmd(0xdb);//--set vcomh
     SPI_WrCmd(0x40);//Set VCOM Deselect Level
-
-    /*
-    * there are diffierent register config between SSD1306 and SH1106
-    */
-    #ifdef CHIP_SH1106
+    SPI_WrCmd(0x8d);//--set Charge Pump enable/disable
+    SPI_WrCmd(0x14);//--set(0x10) disable
+#elif defined(CHIP_SSD1309)
+    SPI_WrCmd(0xD9);//--set pre-charge period
+    SPI_WrCmd(0x82);//Set Pre-Charge as 15 Clocks & Discharge as 1 Clock
+    SPI_WrCmd(0xDB);//--set vcomh
+    SPI_WrCmd(0x34);//Set VCOM Deselect Level
+#elif defined(CHIP_SH1106)
     SPI_WrCmd(0xad);
     SPI_WrCmd(0x8b);
     SPI_WrCmd(0x33);
-    #endif
-    //SPI_WrCmd(0x20);//-Set Page Addressing Mode (0x00/0x01/0x02)
-    //SPI_WrCmd(0x02);//
-    //SPI_WrCmd(0xa4);// Disable Entire Display On (0xa4/0xa5)
-    //SPI_WrCmd(0xa6);// Disable Inverse Display On (0xa6/a7) 
     SPI_WrCmd(0x8d);//--set Charge Pump enable/disable
     SPI_WrCmd(0x14);//--set(0x10) disable
-    SPI_WrCmd(0xaf);//--turn on oled panel
+#else 
+    #error "NO OLED CHIP SELECTED"
+#endif
+    //SPI_WrCmd(0x20);//-Set Page Addressing Mode (0x00/0x01/0x02)
+    //SPI_WrCmd(0x02);//
+    SPI_WrCmd(0xa4);// Disable Entire Display On (0xa4/0xa5) //验证新增  SSD1306pass
+    SPI_WrCmd(0xa6);// Disable Inverse Display On (0xa6/a7)  //验证新增  SSD1306pass
     OLED_Fill(0x00);  //初始清屏
-    OLED_Set_Pos(0,0); 	
+    SPI_WrCmd(0xaf);//--turn on oled panel
+    OLED_Set_Pos(0,0);
+#endif   /* NOT SSD1331 */
 } 
 
-
-
 #ifdef FEATURE_F6x8
-void OLED_P6x8Char(uint8_t x,uint8_t y,char m)
+void OLED_P6x8Char(uint8_t x,uint8_t y,char m, uint16_t ucYn)
 {
-     uint8_t i;
+    uint8_t i;
+	m = m - 32;
     if(y>122)
     {
       y++;
@@ -566,7 +800,7 @@ void OLED_P6x8Char(uint8_t x,uint8_t y,char m)
      }
     OLED_Set_Pos(x,y);
     for(i=0;i<6;i++)
-    SPI_WrDat(F6x8[m-32][i]);
+        ucYn ? SPI_WrDat(F6x8[m][i]) : SPI_WrDat(~F6x8[m][i]);
 }
 //==============================================================
 //函数名：OLED_P6x8Str(unsigned char x,unsigned char y,unsigned char *p)
@@ -574,42 +808,35 @@ void OLED_P6x8Char(uint8_t x,uint8_t y,char m)
 //参数：显示的位置（x,y），y为页范围0～7，要显示的字符串
 //返回：无
 //==============================================================  
-void OLED_P6x8Str(uint8_t x,uint8_t y,uint8_t ch[],uint8_t yn)
+void OLED_P6x8Str(uint8_t x,uint8_t y,uint8_t ch[],uint16_t ucYn)
 {
-    uint8_t c=0,i=0,j=0;      
+    uint8_t i=0,j=0;      
     while (ch[j]!='\0')
     {    
-        c =ch[j]-32;
         if(x>121)
-		{
-		  x=0;y++;
-		  if(y>7) return;
-		}
-        OLED_Set_Pos(x,y);
-        for(i=0;i<6;i++) 
-        {  if(yn)
-            SPI_WrDat(F6x8[c][i]);
-           else
-            SPI_WrDat(~F6x8[c][i]);  
+        {
+            x = 0; y++;
+            if( y > OLED_LINE_MAX + (LINE_HEIGHT >> 1)) return;
         }
+		OLED_P6x8Char(x, y, ch[j], ucYn);
         x+=6;
         j++;
     }
 }
 
 //显示N位整数 N = 1-4
-void OLED_P6x8Num(uint8_t x, uint8_t y ,int num, uint8_t ucLen) 
+void OLED_P6x8Num(uint8_t x, uint8_t y ,int num, uint8_t ucLen, uint16_t ucYn) 
 { 
     uint8_t i, ucWei[4];
     
     if(num>=0)
     {
-     OLED_P6x8Char(x,y,' ');   
+     OLED_P6x8Char(x,y,' ', ucYn);   
     }
     else
     {
      num=-num;
-     OLED_P6x8Char(x,y,'-');
+     OLED_P6x8Char(x,y,'-', ucYn);
     }
     x += 6;
     
@@ -619,12 +846,12 @@ void OLED_P6x8Num(uint8_t x, uint8_t y ,int num, uint8_t ucLen)
     ucWei[0]=num/1000;
     
     for (i = (4 - ucLen); i < 4; i++) {
-        OLED_P6x8Char(x, y, '0' + ucWei[i]);
+        OLED_P6x8Char(x, y, '0' + ucWei[i], ucYn);
         x += 6;
     }
 }
 
-void OLED_P6x8Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUnit) 
+void OLED_P6x8Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUnit, uint16_t ucYn) 
 {
     /* 小数点浮动  高位灭零  负号位置固定 */
     uint8_t subshi,subbai;
@@ -633,11 +860,11 @@ void OLED_P6x8Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUnit
     
     x_start = x;	
     if (m<0) {
-        OLED_P6x8Char(x, y, '-');
+        OLED_P6x8Char(x, y, '-', ucYn);
         m = -m;
         x += 6;
     } else {
-        OLED_P6x8Char(x,y,' ');
+        OLED_P6x8Char(x,y,' ', ucYn);
         x += 6; 
     }
     inte = (int16_t)m;  // 取出整数部分 
@@ -669,45 +896,45 @@ void OLED_P6x8Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUnit
         length--;
         while(inte)
         {
-            OLED_P6x8Char(x+6*(length--),y,'0'+inte%10);                         /* 先写整数部分的个位 */
+            OLED_P6x8Char(x+6*(length--),y,'0'+inte%10,ucYn);                         /* 先写整数部分的个位 */
             inte/=10;
         }
         x=x_temp;
     }
     else //整数部分为零  这就用不到x_temp 了
     {
-      OLED_P6x8Char(x,y,'0'); x += 6;
+      OLED_P6x8Char(x,y,'0', ucYn); x += 6;
     }
     
     if (ucFracNum > 0) {
-        OLED_P6x8Char(x,y,'.');   x += 6; // 小数点
+        OLED_P6x8Char(x,y,'.', ucYn);   x += 6; // 小数点
 	    subshi=(uint16_t)(m*10)%10;
-        OLED_P6x8Char(x,y,'0'+subshi);     x+=6; // 显示十分位
+        OLED_P6x8Char(x,y,'0'+subshi, ucYn);     x+=6; // 显示十分位
     }
     if (ucFracNum == 2) {
   	    subbai=(uint16_t)(m*100)%10; 
-        OLED_P6x8Char(x,y,'0'+subbai);     x+=6; // 显示百分位
+        OLED_P6x8Char(x,y,'0'+subbai, ucYn);     x+=6; // 显示百分位
     }
     switch (ucUnit) {
     
     case 0:                                      // 摄氏度
-        OLED_P6x8Char(x,y,'z' + 2); x+=6;
+        OLED_P6x8Char(x,y,'z' + 2, ucYn); x+=6;
         break;
     
     case 1:
-        OLED_P6x8Char(x,y,'V'); x+=6;
+        OLED_P6x8Char(x,y,'V', ucYn); x+=6;
         break;
     
     case 2:
-        OLED_P6x8Char(x,y,'A'); x+=6;
+        OLED_P6x8Char(x,y,'A', ucYn); x+=6;
         break;
     
     case 3:
-        OLED_P6x8Char(x,y,'M'); x+=6;
+        OLED_P6x8Char(x,y,'M', ucYn); x+=6;
         break;
 
     case 4:
-        OLED_P6x8Char(x,y,'%'); x+=6;
+        OLED_P6x8Char(x,y,'%', ucYn); x+=6;
         break;
 
     default :
@@ -715,7 +942,7 @@ void OLED_P6x8Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUnit
     }
     x_start = (x_start + 36) > 127 ? 127 : (x_start + 36);
     while(x < (x_start)) {
-        OLED_P6x8Char(x,y,' '); x+=6;
+        OLED_P6x8Char(x,y,' ', ucYn); x+=6;
     }
 }
 
@@ -728,7 +955,7 @@ void OLED_P6x8Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUnit
 * @brief expect for the motify the define Don't forget the RCC_APB2PeriphClockCmd
 *********************************************************************
 */
-void OLED_P6x8Time(uint8 x,uint8 y,RTC_Time_s * time)
+void OLED_P6x8Time(u8 x,u8 y,RTC_Time_s * time, uint16_t ucYn)
 {
 	// OLED_P8x16Char(x,y,time->year%100/10+0x30); x+=8;
     // OLED_P8x16Char(x,y,time->year%10+0x30);     x+=8;
@@ -742,25 +969,46 @@ void OLED_P6x8Time(uint8 x,uint8 y,RTC_Time_s * time)
 //	 OLED_P6x8Char(x,y,time->hour%100/10+0x30); x+=6;
 //	 OLED_P6x8Char(x,y,time->hour%10+0x30);     x+=6; 
 //	 OLED_P6x8Char(x,y,':');                    x+=6;
-     OLED_P6x8Char(x,y,time->minute%100/10+0x30); x+=6;
-	 OLED_P6x8Char(x,y,time->minute%10+0x30);     x+=6; 
-	 OLED_P6x8Char(x,y,':');                      x+=6;
-	 OLED_P6x8Char(x,y,time->second%100/10+0x30); x+=6;
-	 OLED_P6x8Char(x,y,time->second%10+0x30);      	
+     OLED_P6x8Char(x,y,time->minute%100/10+0x30, ucYn); x+=6;
+	 OLED_P6x8Char(x,y,time->minute%10+0x30, ucYn);     x+=6; 
+	 OLED_P6x8Char(x,y,':', ucYn);                      x+=6;
+	 OLED_P6x8Char(x,y,time->second%100/10+0x30, ucYn); x+=6;
+	 OLED_P6x8Char(x,y,time->second%10+0x30, ucYn);      	
 }
 
 #endif
 
 #ifdef FEATURE_F8x16
-void OLED_P8x16Char(uint8_t x,uint8_t y,uint8_t wan)
+void OLED_P8x16Char(uint8_t x,uint8_t y,uint8_t wan, uint16_t ucYn)
 {   
-    uint8_t i;
-    OLED_Set_Pos(x,y);                 
-    for(i=0;i<8;i++)
-    SPI_WrDat(F8X16[(wan-32)*16+i]);
-    OLED_Set_Pos(x,y+1);
-    for(i=0;i<8;i++)
-    SPI_WrDat(F8X16[(wan-32)*16+i+8]); 
+#if defined(CHIP_SSD1331) || defined(CHIP_SSD1351)
+    u8 pos,t,temp;
+    u16 x1=x;
+    if(x > (OLED_WIDTH - 8))   return;      //设置窗口	||y>OLED_HIGH-8	   
+    wan=wan-' ';//得到偏移后的值
+    LCD_Address_Set(x,y,x+8-1,y+16-1);      //设置光标位置 
+        for(pos=0;pos<16;pos++)
+        {
+            temp=asc2_1608[(u16)wan*16+pos];		 //调用1608字体
+             for(t=0;t<8;t++)
+            {
+                if(temp&0x01)LCD_DrawPoint(x+t,y+pos,ucYn);//画一个点
+                      else LCD_DrawPoint(x+t,y+pos,BACK_COLOR);
+                temp>>=1;
+            }
+        }
+#else
+//    uint8_t i;
+//    OLED_Set_Pos(x,y);                 
+//    for(i=0;i<8;i++) {
+//        ucYn ? SPI_WrDat(F8X16[(wan-32)*16+i]) : SPI_WrDat(~F8X16[(wan-32)*16+i]);
+//    }
+//    OLED_Set_Pos(x,y+1);
+//    for(i=0;i<8;i++)  {
+//        ucYn ? SPI_WrDat(F8X16[(wan-32)*16+i+8]) : SPI_WrDat(~F8X16[(wan-32)*16+i+8]); 
+//    }
+	  LCD_ShowChar(x,y,wan,ucYn,BACK_COLOR,8,0);
+#endif
 }
 //==m============================================================
 //函数名：OLED_P8x16Str(uint8_t x,uint8_t y,uint8_t *p)
@@ -768,36 +1016,27 @@ void OLED_P8x16Char(uint8_t x,uint8_t y,uint8_t wan)
 //参数：显示的位置（x,y），y为页范围0～7，要显示的字符串
 //返回：无   yn=1  正常显示  yn=0 反黑显示 
 //==============================================================  
-void OLED_P8x16Str(uint8_t x,uint8_t y,uint8_t ch[],uint8_t yn)
+void OLED_P8x16Str(uint8_t x,uint8_t y,uint8_t ch[],uint16_t ucYn)
 {
-    uint8_t c=0,i=0,j=0;
+    uint8_t i=0,j=0;
     
+    if (ucYn == 1) ucYn = FRONT_COLOR;
     while (ch[j]!='\0')
     {    
-        c =ch[j]-32;
-    if(x>120)
-		{
-		   x=0; 
-		   y+=2;
-		   if(y>7)
-		   return;
-		}
-        OLED_Set_Pos(x,y);    
-        for(i=0;i<8;i++)   
-        { 
-          if(yn)
-            SPI_WrDat(F8X16[c*16+i]);
-          else
-            SPI_WrDat(~F8X16[c*16+i]);   
+        if(x > (OLED_WIDTH - 8))
+        {
+            x=0; 
+            y += LINE_HEIGHT;
+            if (y > OLED_LINE_MAX)
+                return;
+//#if !defined(CHIP_SSD1331) || !defined(CHIP_SSD1351)
+//            if(y>7)
+//            return;
+//            ucYn = 0x00FF;
+//#endif
         }
-        OLED_Set_Pos(x,y+1);    
-        for(i=0;i<8;i++)     
-        { 
-           if(yn)
-          SPI_WrDat(F8X16[c*16+i+8]);  
-          else
-          SPI_WrDat(~F8X16[c*16+i+8]);  
-        }
+        OLED_P8x16Char(x, y, ch[j], ucYn);
+
         x+=8;
         j++; 
     }
@@ -805,17 +1044,17 @@ void OLED_P8x16Str(uint8_t x,uint8_t y,uint8_t ch[],uint8_t yn)
 
 
 /* 显示N位整数  n = 1-5*/
-void OLED_P8x16Num(uint8_t x,uint8_t y,int m, uint8_t ucLen)
+void OLED_P8x16Num(uint8_t x,uint8_t y,int m, uint8_t ucLen, uint16_t ucYn)
 {
     uint8_t ucWei[5];
     uint8_t i;
-    
+    if (ucYn == 1) ucYn = FRONT_COLOR;
     if (m < 0) {
         m = -m;
-        OLED_P8x16Char(x, y, '-');
+        OLED_P8x16Char(x, y, '-', ucYn);
         x += 8;
     } else {
-        OLED_P8x16Char(x, y, ' ');
+        OLED_P8x16Char(x, y, ' ', ucYn);
         x += 8;
     }                                     // write minus 
     ucWei[4] = m%10;
@@ -825,7 +1064,7 @@ void OLED_P8x16Num(uint8_t x,uint8_t y,int m, uint8_t ucLen)
     ucWei[0] = m/10000;
     
     for (i = (5 - ucLen); i < 5; i++) {
-        OLED_P8x16Char(x, y, '0' + ucWei[i]);
+        OLED_P8x16Char(x, y, '0' + ucWei[i], ucYn);
         x += 8;
     }
 }
@@ -837,28 +1076,30 @@ uint32_t mypow(uint8_t m,uint8_t n)
 	return result;
 }			
 // 显示000.00 的小数   加了首末尾灭零 
-void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUnit) 
+void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUnit, uint16_t ucYn)
 {
 #if    1          //小数点浮动  高位灭零  负号位置固定
     uint8_t subshi,subbai;
-    uint8_t i,length=0,x_temp,x_start;
+    uint8_t length=0,x_temp,x_start;
     uint16_t inte,temp;//deci; 
     
+    if (ucYn == 1) ucYn = FRONT_COLOR;
     x_start = x;	
     if(m<0)
     {
-        OLED_Set_Pos(x,y);                 
-        for(i=0;i<8;i++)
-        SPI_WrDat(F8X16[13*16+i]);
-        OLED_Set_Pos(x,y+1);
-        for(i=0;i<8;i++)
-        SPI_WrDat(F8X16[13*16+i+8]);  // 写负号 
+//        OLED_Set_Pos(x,y);                 
+//        for(i=0;i<8;i++)
+//        SPI_WrDat(F8X16[13*16+i]);
+//        OLED_Set_Pos(x,y+1);
+//        for(i=0;i<8;i++)
+//        SPI_WrDat(F8X16[13*16+i+8]);  // 写负号
+        OLED_P8x16Char(x, y, '-', ucYn);
         m=-m;
         x+=8;
     } 
 	 else
 	 {
-		  OLED_P8x16Char(x,y,' '); x+=8; 
+		  OLED_P8x16Char(x,y,' ', ucYn); x+=8; 
 	 }
    inte=(int16_t)m;  // 取出整数部分 
    temp=inte;	 
@@ -889,46 +1130,46 @@ void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUni
         length--;
         while(inte)
         {
-            OLED_P8x16Char(x+8*(length--),y,'0'+inte%10);                         /* 先写整数部分的个位 */
+            OLED_P8x16Char(x+8*(length--),y,'0'+inte%10, ucYn);                         /* 先写整数部分的个位 */
             inte/=10;
         }
         x=x_temp;
     }
     else //整数部分为零  这就用不到x_temp 了
     {
-      OLED_P8x16Char(x,y,'0'); x+=8;
+      OLED_P8x16Char(x,y,'0', ucYn); x+=8;
     }
 
     if (ucFracNum > 0) {
-		OLED_P8x16Char(x,y,'.'); x+=8; // 小数点
+		OLED_P8x16Char(x,y,'.', ucYn); x+=8; // 小数点
 		subshi=(uint16_t)(m*10)%10;
-		OLED_P8x16Char(x,y,'0'+subshi); x+=8; // 显示十分位
+		OLED_P8x16Char(x,y,'0'+subshi, ucYn); x+=8; // 显示十分位
     }
     if (ucFracNum == 2) {
 		subbai=(uint16_t)(m*100)%10; 
-        OLED_P8x16Char(x,y,'0'+subbai); x+=8; // 显示百分位
+        OLED_P8x16Char(x,y,'0'+subbai, ucYn); x+=8; // 显示百分位
     }
     switch (ucUnit) {
     
-    case 0:                                // 摄氏度
-        OLED_P8x16Char(x,y,95 + 32); x+=8;
-        OLED_P8x16Char(x,y,96 + 32); x+=8;
+    case 0:                                // 摄氏度 95 + 32  96 + 32
+        OLED_P8x16Char(x,y,'C', ucYn); x+=8;
+        OLED_P8x16Char(x,y,'C', ucYn); x+=8;
         break;
     
     case 1:
-        OLED_P8x16Char(x,y,'V'); x+=8;
+        OLED_P8x16Char(x,y,'V', ucYn); x+=8;
         break;
     
     case 2:
-        OLED_P8x16Char(x,y,'A'); x+=8;
+        OLED_P8x16Char(x,y,'A', ucYn); x+=8;
         break;
     
     case 3:
-        OLED_P8x16Char(x,y,'M'); x+=8;
+        OLED_P8x16Char(x,y,'M', ucYn); x+=8;
         break;
 
     case 4:
-        OLED_P8x16Char(x,y,'%'); x+=8;
+        OLED_P8x16Char(x,y,'%', ucYn); x+=8;
         break;
 
     default :
@@ -936,7 +1177,7 @@ void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUni
     }
     x_start = (x_start + 64) > 127 ? 127 : (x_start + 64);
     while(x < (x_start)) {
-        OLED_P8x16Char(x,y,' '); x+=8;
+        OLED_P8x16Char(x,y,' ', ucYn); x+=8;
     }
         
 //    OLED_P8x16Char(x,y,'0'+subbai); x+=8;// 最后的两位小数不管怎么都显示  
@@ -980,20 +1221,20 @@ void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUni
 //	 x+8
 //	 x+16
 //	 x+24
-  OLED_P8x16Char(x+32,y,'.'); // 小数点位置固定   
+  OLED_P8x16Char(x+32,y,'.', ucYn); // 小数点位置固定   
   subshi=(uint16_t)(m*10)%10;
   subbai=(uint16_t)(m*100)%10; 
-	OLED_P8x16Char(x+48,y,'0'+subshi);
-  OLED_P8x16Char(x+40,y,'0'+subbai);// 最后的两位小数不管怎么都显示  
+	OLED_P8x16Char(x+48,y,'0'+subshi, ucYn);
+  OLED_P8x16Char(x+40,y,'0'+subbai, ucYn);// 最后的两位小数不管怎么都显示  
    if(m<0)
    {
 		  m=-m;
 		  negative=1; 
-		  OLED_P8x16Char(x,y,'-');  x+=8;
+		  OLED_P8x16Char(x,y,'-', ucYn);  x+=8;
    } 
 	 else
 	 {
-		  OLED_P8x16Char(x,y,' ');  x+=8; 
+		  OLED_P8x16Char(x,y,' ', ucYn);  x+=8; 
 	 }
    inte=(int16_t)m;  // 取出整数部分  
   //右对齐写整数部分
@@ -1004,7 +1245,7 @@ void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUni
 		{
 			if(temp==0)
 			{
-				OLED_P8x16Char(x,y,' ');  x+=8; //灭零吧 yizhi 
+				OLED_P8x16Char(x,y,' ', ucYn);  x+=8; //灭零吧 yizhi 
 				continue; // 本次循环立即结束 
 			}
 			else 
@@ -1016,7 +1257,7 @@ void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUni
 //				}
 			}
 		}
-	 	OLED_P8x16Char(x,y,temp+'0'); x+=8; 	 
+	 	OLED_P8x16Char(x,y,temp+'0', ucYn); x+=8; 	 
 	}
 	
 
@@ -1062,26 +1303,27 @@ void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUni
 #description:
 #author::  2016-03-21 by yizhi 
 ******************************************************************/
-void OLED_HexDisp(uint8_t x,uint8_t y,uint8_t *dat,uint8_t N)
+void OLED_HexDisp(uint8_t x,uint8_t y,uint8_t *dat,uint8_t N, uint16_t ucYn)
 {
 	uint8_t temp,i;
+    if (ucYn == 1) ucYn = FRONT_COLOR;
 	for(i=0;i<N;i++)
 	{
 		temp=dat[i];//数组下标方式访问指针数据
 		dat[i]>>=4; 
 		if(dat[i]<10)
-		OLED_P8x16Char(x,y,'0'+dat[i]);
+		OLED_P8x16Char(x,y,'0'+dat[i], ucYn);
 		else
-		OLED_P8x16Char(x,y,'A'+dat[i]-10);
+		OLED_P8x16Char(x,y,'A'+dat[i]-10, ucYn);
 		temp&=0x0f;
 		x+=8;
 		if(temp<10)
-		OLED_P8x16Char(x,y,'0'+temp);
+		OLED_P8x16Char(x,y,'0'+temp, ucYn);
 		else
-		OLED_P8x16Char(x,y,'A'+temp-10);
+		OLED_P8x16Char(x,y,'A'+temp-10, ucYn);
 		x+=8;
 		if(i<(N-1))
-		OLED_P8x16Char(x,y,'-');
+		OLED_P8x16Char(x,y,'-', ucYn);
     x+=8;		
  }
 }
@@ -1095,8 +1337,9 @@ void OLED_HexDisp(uint8_t x,uint8_t y,uint8_t *dat,uint8_t N)
 * @brief expect for the motify the define Don't forget the RCC_APB2PeriphClockCmd
 *********************************************************************
 */
-void OLED_P8x16Time(uint8 x,uint8 y,RTC_Time_s * time)
+void OLED_P8x16Time(u8 x,u8 y,RTC_Time_s * time, uint16_t ucYn)
 {
+    if (ucYn == 1) ucYn = FRONT_COLOR;
 	// OLED_P8x16Char(x,y,time->year%100/10+0x30); x+=8;
     // OLED_P8x16Char(x,y,time->year%10+0x30);     x+=8;
 	// OLED_P8x16Char(x,y,'-'); x+=8;
@@ -1109,11 +1352,11 @@ void OLED_P8x16Time(uint8 x,uint8 y,RTC_Time_s * time)
 //	 OLED_P8x16Char(x,y,time->hour%100/10+0x30); x+=8;
 //	 OLED_P8x16Char(x,y,time->hour%10+0x30);     x+=8; 
 //	 OLED_P8x16Char(x,y,':'); x+=8;
-     OLED_P8x16Char(x,y,time->minute%100/10+0x30); x+=8;
-	 OLED_P8x16Char(x,y,time->minute%10+0x30);     x+=8; 
-	 OLED_P8x16Char(x,y,':'); x+=8;
-	 OLED_P8x16Char(x,y,time->second%100/10+0x30); x+=8;
-	 OLED_P8x16Char(x,y,time->second%10+0x30);      	
+     OLED_P8x16Char(x,y,time->minute%100/10+0x30, ucYn); x+=8;
+	 OLED_P8x16Char(x,y,time->minute%10+0x30, ucYn);     x+=8; 
+     OLED_P8x16Char(x,y,':', ucYn); x+=8;
+	 OLED_P8x16Char(x,y,time->second%100/10+0x30, ucYn); x+=8;
+	 OLED_P8x16Char(x,y,time->second%10+0x30, ucYn);      	
 }
 #endif
 
@@ -1146,11 +1389,11 @@ void OLED_P14x16Ch(unsigned char x,unsigned char y,unsigned char N)
 # 其    他：找不到字模输出一方块, 需要使用驱魔软件驱魔 
 # 作    者: 2016/1/21,by yizhi
 *********************************************************************************/
-void OLED_P14x16Ch(uint8_t x,uint8_t y,uint8_t ch[])
+void OLED_P14x16Ch(uint8_t x,uint8_t y,uint8_t ch[], uint16_t ucYn)
 {
 	uint8_t wm=0,ii = 0;
 	uint16_t adder=1; 
-	
+	ucYn = ucYn;
 	while(ch[ii] != '\0') //挨个输出每个汉字
 	{
   	  wm = 0;
@@ -1212,9 +1455,10 @@ void OLED_P14x16Ch(uint8_t x,uint8_t y,uint8_t ch[])
 # 其    他：
 # 作    者: 2016/1/21,by yizhi
 *********************************************************************************/
-void OLED_P16x16Str(uint8_t x,uint8_t y,const uint8_t ch[][32],uint8_t len)
+void OLED_P16x16Str(uint8_t x,uint8_t y,const uint8_t ch[][32],uint8_t len, uint16_t ucYn)
 {
    uint8_t i,j,adder;
+   ucYn = ucYn;
    for(i=0;i<len;i++) // 写len个汉字
    {
         adder=0;
@@ -1235,10 +1479,11 @@ void OLED_P16x16Str(uint8_t x,uint8_t y,const uint8_t ch[][32],uint8_t len)
 
 #ifdef FEATURE_F8x16
 //输出汉字和字符混合字符串
-void OLED_Print(uint8_t x, uint8_t y, uint8_t ch[])
+void OLED_Print(uint8_t x, uint8_t y, uint8_t ch[], uint16_t ucYn)
 {
 	uint8_t ch2[3];
-	uint8_t ii=0;        
+	uint8_t ii=0; 
+    ucYn = ucYn;	
 	while(ch[ii] != '\0')
 	{
 		if(ch[ii] > 127)
@@ -1246,7 +1491,7 @@ void OLED_Print(uint8_t x, uint8_t y, uint8_t ch[])
 			ch2[0] = ch[ii];
 	 		ch2[1] = ch[ii + 1];
 			ch2[2] = '\0';			//汉字为两个字节
-			OLED_P14x16Ch(x , y, ch2);	//显示汉字
+			OLED_P14x16Ch(x , y, ch2, 1);	//显示汉字
 			x += 14;
 			ii += 2;
 		}

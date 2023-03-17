@@ -320,13 +320,13 @@ void LCD_ShowChar(uint16_t x,uint16_t y,uint8_t num,uint16_t fc,uint16_t bc,uint
 	LCD_Address_Set(x, y, x+sizex-1, y+sizey-1);  //设置光标位置 
 	for(i = 0; i < sizey; i++)
 	{ 
-		if (sizex == 6)
-			temp = F6x8[num][i];		       //调用6x8字体
-		else if (sizex == 8)
-			temp = ascii_1608[num][i];		 //调用8x16字体
+//		if (sizex == 6)
+//			temp = F6x8[num][i];		       //调用6x8字体
+//		else if (sizex == 8)
+		temp = ascii_1608[num][i];		 //调用8x16字体
 //		else if(sizey==24)temp=ascii_2412[num][i];		 //调用12x24字体
 //		else if(sizey==32)temp=ascii_3216[num][i];		 //调用16x32字体
-		else return;
+//		else return;
 		for(t=0;t<8;t++)
 		{
 			if (!mode)//非叠加模式
