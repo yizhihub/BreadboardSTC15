@@ -72,12 +72,15 @@ void SHT3x_Test(void)
 #endif
 }
 /**
-* @nameis SHT3x_Test
-* @effect Get the measured temperature (in degrees Celsius * 10) and Humidity (in %)
-* @import pointer
-* @export pTemp,pHumi
-* @return none
-*/
+********************************************************************************************************
+** @nameis SHT3x_Test
+** @effect Get the measured temperature (in degrees Celsius * 10) and Humidity (in %)
+** @import pointer
+** @export pTemp,pHumi
+** @return none
+** @create yizhi 2023.03.20
+** @modify 
+*********************************************************************************************************/
 void SHT3x_Read(int16_t *psTemp, uint8_t *pucHumi)
 {
     uint8_t  ucResponsStat;

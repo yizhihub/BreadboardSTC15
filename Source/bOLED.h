@@ -19,12 +19,16 @@
 
 //#include "fsl_common.h"
 //#include "fsl_snvs_hp.h"
+//#include "fsl_snvs_hp.h"
 
 /*
  * slection among CHIP_SSD1306,CHIP_SH1106,CHIP_SSD1309,CHIP_SSD1331,CHIP_SSD1351
  */
-#define CHIP_SSD1306
+#define CHIP_SSD1351
 
+#if  defined(CHIP_SSD1331) | defined(CHIP_SSD1351)
+#define OLED_COLOR
+#endif
 
 #define XLevelL		0x00
 #define XLevelH		0x10
@@ -57,11 +61,11 @@
 #define OLED_LINE_MAX  3*LINE_HEIGHT
 #endif
 
-#if defined(STC15W408ASDIP16)
+#if defined(STC15W408ASDIP16) || defined(STM32F10X_HD)
 #undef Landscope
 #undef Verticall
 #define Landscope   0xa1     // Set SEG/Column Mapping       0xa0左右反置 0xa1正常
-#define Verticall   0xc1     // Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
+#define Verticall   0xc8     // Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
 #endif
 
 #define OLED_LINE0 0*LINE_HEIGHT
@@ -75,10 +79,10 @@
 /*
  * other alternative feature
  */
-#define FEATURE_F6x8
-#define FEATURE_F8x16
+//#define FEATURE_F6x8
+//#define FEATURE_F8x16
 //#define FEATURE_F16x32
-//#define FEATURE_HANZI
+#define FEATURE_HANZI
 //#define FEATURE_BMP
 
 typedef struct yizhi_RTC_Time_s
@@ -133,16 +137,16 @@ sbit OLED_CS = P1^2;
 #define OLED_DC   PBout(4) 
 #define OLED_CS   PBout(6)
 
-#define OLED_SCL_0    OLED_SCL = 0
-#define OLED_SCL_1    OLED_SCL = 1
-#define OLED_SDA_0    OLED_SDA = 0
-#define OLED_SDA_1    OLED_SDA = 1
-#define OLED_RST_0    OLED_RST = 0
-#define OLED_RST_1    OLED_RST = 1
-#define OLED_DC_0     OLED_DC = 0
-#define OLED_DC_1     OLED_DC = 1
-#define OLED_CS_0     OLED_CS = 0
-#define OLED_CS_1     OLED_CS = 1
+#define OLED_SCL_0    GPIOC->BRR  = 1 << 6// //OLED_SCL = 0
+#define OLED_SCL_1    GPIOC->BSRR = 1 << 6// //OLED_SCL = 1
+#define OLED_SDA_0    GPIOB->BRR  = 1 << 0// //OLED_SDA = 0
+#define OLED_SDA_1    GPIOB->BSRR = 1 << 0// //OLED_SDA = 1
+#define OLED_RST_0    GPIOB->BRR  = 1 << 2// //OLED_RST = 0
+#define OLED_RST_1    GPIOB->BSRR = 1 << 2// //OLED_RST = 1
+#define OLED_DC_0     GPIOB->BRR  = 1 << 4// //OLED_DC  = 0
+#define OLED_DC_1     GPIOB->BSRR = 1 << 4// //OLED_DC  = 1
+#define OLED_CS_0     GPIOB->BRR  = 1 << 6// //OLED_CS  = 0
+#define OLED_CS_1     GPIOB->BSRR = 1 << 6// //OLED_CS  = 1      /* 改为BRR BSRR寄存器 5.5958ms -> 4.4171ms  */
 
 #elif defined(RT1052)
 /* OLED Pin Group 1*/
@@ -176,28 +180,24 @@ void OLED_Fill(unsigned int usData);
 void OLED_PutPixel(uint8_t x,uint8_t y);
 void OLED_DrawBMP(uint8_t x0,uint8_t y0,uint8_t x1,uint8_t y1);
 /* 汉字显示 */
-void OLED_P14x16Ch(uint8_t x,uint8_t y,uint8_t ch[], uint16_t ucYn);
+void OLED_PutHan(uint8_t x,uint8_t y,uint8_t ch[], uint16_t ucYn);
 void OLED_Print(uint8_t x, uint8_t y, uint8_t ch[], uint16_t ucYn);
-void OLED_P16x16Str(uint8_t x,uint8_t y,const uint8_t ch[][32],uint8_t len, uint16_t ucYn);
 /* 字符显示 */
-void OLED_P6x8Char(uint8_t x,uint8_t y,char m, uint16_t ucYn);
-void OLED_P6x8Str(uint8_t x,uint8_t y,uint8_t ch[],uint16_t ucYn);
-void OLED_P8x16Char(uint8_t x,uint8_t y,uint8_t wan, uint16_t ucYn);
-void OLED_P8x16Str(uint8_t x,uint8_t y,uint8_t ch[],uint16_t ucYn);
+void OLED_PutChar(uint8_t x,uint8_t y,uint8_t wan, u8 ucSize, uint16_t ucYn);
+void OLED_PutStr(uint8_t x,uint8_t y,uint8_t ch[], u8 ucSize, uint16_t ucYn);
 /* 数值显示 */
-void OLED_P6x8Num(uint8_t x, uint8_t y, int  num, uint8_t ucLen, uint16_t ucYn);// 显示4位整数  小 
-void OLED_P6x8Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUnit, uint16_t ucYn);
-void OLED_P8x16Num(uint8_t x,uint8_t y, int m, uint8_t ucLen, uint16_t ucYn);
-void OLED_P8x16Dot(uint8_t x,uint8_t y,float m, uint8_t ucFracNum, uint8_t ucUnit, uint16_t ucYn);   // 显示小数
+void OLED_PutNum(uint8_t x,uint8_t y,int m, uint8_t ucLen, u8 ucSize, uint16_t ucYn);
+void OLED_PutNumber(u8 x,u8 y,float m, u8 M, u8 N, char* pUnit, u8 ucSize, uint16_t ucYn);
 
 /* 特殊数值显示 */
 void OLED_P16x32Num(uint8_t p,int num,uint8_t unit);// 特大字体
-void OLED_HexDisp(uint8_t x,uint8_t y,uint8_t *dat,uint8_t N, uint16_t ucYn);
+void OLED_HexDisp(uint8_t x,uint8_t y,uint8_t *dat,uint8_t N, u8 ucSize, uint16_t ucYn);
 void OLED_P16x32Time(uint8_t p, RTC_Time_s *ptTime);//大字体时钟显示
-void OLED_P8x16Time(u8 x,u8 y,RTC_Time_s * time, uint16_t ucYn);//小字体时钟显示;
-void OLED_P6x8Time(u8 x,u8 y,RTC_Time_s * time, uint16_t ucYn); //小字体时钟显示;
+void OLED_PutTime(u8 x,u8 y,RTC_Time_s * time, u8 ucSize, uint16_t ucYn);//小字体时钟显示;
 void timeClockStep(RTC_Time_s *ptTime);
 
+extern u16 BACK_COLOR;
+extern u16 FRONT_COLOR;
 //颜色
 #define WHITE         	 0xFFFF
 #define BLACK         	 0x0000	  

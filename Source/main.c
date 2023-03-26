@@ -64,7 +64,7 @@ void main(void)
     OLED_P8x16Str(0, OLED_LINE0, cVerID, 1);
 //    OLED_P8x16Str(32, OLED_LINE1, pcVerStr1, 1);
 //    OLED_P8x16Str(16, OLED_LINE2, pcVerStr2, 1);
-    OLED_P6x8Str(0, OLED_LINE1, cVerID, 1);
+//    OLED_P6x8Str(0, OLED_LINE1, cVerID, 1);
 #endif
     msDelay(1000);
     OLED_Fill(0x00);
@@ -169,8 +169,8 @@ void main(void)
                     OLED_P8x16Time(0, OLED_LINE0, &GtTime, 1);
                     OLED_P8x16Dot(48, OLED_LINE0, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1, 1);
 //#elif defined(FEATURE_F6x8)
-                    OLED_P6x8Time(0,  OLED_LINE1, &GtTime, 1);
-                    OLED_P6x8Dot(48,  OLED_LINE1, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1, 1);
+//                    OLED_P6x8Time(0,  OLED_LINE1, &GtTime, 1);
+//                    OLED_P6x8Dot(48,  OLED_LINE1, (float)((long)sVbgMv * 1023 / sVccPower) / 1000.0f, 2, 1, 1);
 #endif
                 }
            }
