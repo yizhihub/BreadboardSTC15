@@ -68,7 +68,7 @@ void SHT3x_Test(void)
     usStat |= i2cReadByte(0);
     i2cStop();
 #if defined(FEATURE_F8x16)
-    OLED_HexDisp(48, 0, (uint8*)&usStat, 2, 1);
+    OLED_HexDisp(48, 0, (uint8*)&usStat, 2, 8, 1);
 #endif
 }
 /**

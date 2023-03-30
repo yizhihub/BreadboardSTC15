@@ -13,20 +13,19 @@
 #ifdef STM32F10X_HD
 #include "sys.h"
 #include "delay.h"
+#elif defined(RT1052)
+#include "fsl_common.h"
+#include "fsl_snvs_hp.h"
 #else
 #include "common.h"
 #endif
 
-//#include "fsl_common.h"
-//#include "fsl_snvs_hp.h"
-//#include "fsl_snvs_hp.h"
-
 /*
- * slection among CHIP_SSD1306,CHIP_SH1106,CHIP_SSD1309,CHIP_SSD1331,CHIP_SSD1351
+ * slection among CHIP_SSD1306,CHIP_SH1106,CHIP_SSD1309,CHIP_SSD1331,CHIP_SSD1351, CHIP_ST7735
  */
-#define CHIP_SSD1351
+#define CHIP_ST7735  
 
-#if  defined(CHIP_SSD1331) | defined(CHIP_SSD1351)
+#if  defined(CHIP_SSD1331) || defined(CHIP_SSD1351) || defined(CHIP_ST7735)
 #define OLED_COLOR
 #endif
 
@@ -43,22 +42,30 @@
 #define LINE_HEIGHT 2
 
 /*
- * 显示屏尺寸调整   为什么不起作用呢 
+ * 显示屏尺寸调整
  */
 #if defined(CHIP_SSD1331)
-#undef OLED_WIDTH
-#undef LINE_HEIGHT
-#define OLED_WIDTH 96
-#define LINE_HEIGHT 16
-#define OLED_LINE_MAX  3*LINE_HEIGHT
+    #undef OLED_WIDTH
+    #undef LINE_HEIGHT
+    #define OLED_WIDTH 96
+    #define LINE_HEIGHT 16
+    #define OLED_LINE_MAX  3*LINE_HEIGHT
 #elif defined(CHIP_SSD1351)
-#undef OLED_HIGH
-#undef LINE_HEIGHT
-#define OLED_HIGH   128
-#define LINE_HEIGHT 16
-#define OLED_LINE_MAX  7*LINE_HEIGHT
+    #undef OLED_HIGH
+    #undef LINE_HEIGHT
+    #define OLED_HIGH   128
+    #define LINE_HEIGHT 16
+    #define OLED_LINE_MAX  7*LINE_HEIGHT
+#elif defined(CHIP_ST7735)
+    #undef OLED_WIDTH
+    #undef OLED_HIGH
+    #undef LINE_HEIGHT
+    #define OLED_WIDTH   160
+    #define OLED_HIGH    80
+    #define LINE_HEIGHT  16
+    #define OLED_LINE_MAX  4*LINE_HEIGHT
 #else
-#define OLED_LINE_MAX  3*LINE_HEIGHT
+    #define OLED_LINE_MAX  3*LINE_HEIGHT
 #endif
 
 #if defined(STC15W408ASDIP16) || defined(STM32F10X_HD)
@@ -79,8 +86,8 @@
 /*
  * other alternative feature
  */
-//#define FEATURE_F6x8
-//#define FEATURE_F8x16
+#define FEATURE_F6x8
+#define FEATURE_F8x16
 //#define FEATURE_F16x32
 #define FEATURE_HANZI
 //#define FEATURE_BMP
@@ -110,6 +117,9 @@ sbit OLED_SDA= P2^7;
 sbit OLED_RST= P1^0;
 sbit OLED_DC = P1^1;
 sbit OLED_CS = P1^2;
+sbit LCD_BLK = P1^3;
+#define LCD_BLK_0    LCD_BLK = 0
+#define LCD_BLK_1    LCD_BLK = 1
 #elif defined(STC15W408ASDIP16)
 sbit OLED_SCL= P5^4;                                                    /* 15W408AS  DIP16 Left 正置 */
 sbit OLED_SDA= P1^5;
@@ -147,6 +157,8 @@ sbit OLED_CS = P1^2;
 #define OLED_DC_1     GPIOB->BSRR = 1 << 4// //OLED_DC  = 1
 #define OLED_CS_0     GPIOB->BRR  = 1 << 6// //OLED_CS  = 0
 #define OLED_CS_1     GPIOB->BSRR = 1 << 6// //OLED_CS  = 1      /* 改为BRR BSRR寄存器 5.5958ms -> 4.4171ms  */
+#define LCD_BLK_0     GPIOB->BRR  = 1 << 8
+#define LCD_BLK_1     GPIOB->BSRR = 1 << 8
 
 #elif defined(RT1052)
 /* OLED Pin Group 1*/
@@ -174,7 +186,8 @@ sbit OLED_CS = P1^2;
 #define OLED_CS_1     GPIO1->DR  |= (1 << 21)
 #endif
 
-
+void SPI_WrDat(unsigned char dat);
+void SPI_WrCmd(unsigned char cmd);
 void OLED_Init(void);
 void OLED_Fill(unsigned int usData);
 void OLED_PutPixel(uint8_t x,uint8_t y);

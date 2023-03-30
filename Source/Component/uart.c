@@ -271,22 +271,22 @@ unsigned long strtou32(char *str)
 unsigned char    GucThrotSize[2];                              // max support 4 throttle cmd
 short            Gq15ThrotCmd[2]; // _at_ 0x014A;
 short            Gq15ReportData[4];
-unsigned char    GbReportFlg = 0, GbSetupScopeSent = 0;
+unsigned char    GbReportFlg = 0, GbSetupScopeSent = 0, GbBluetoothOK = 0;
 
-void uartAppSendThrot(int16_t qValue)
+void uartAppSendThrot(int16_t sValueRpm)
 {
     uint8_t cSumCheck = 0, i;
-    int     sTemp1; 
+    int     qTemp1; 
     
     GucUartTxBuf[1] = 0x16;   // commander message
     GucUartTxBuf[2] = 4u;     // length of payload
     GucUartTxBuf[3] = 1u;     // number of var. to send
     GucUartTxBuf[4] = 2u;     // size of var.
     
-    sTemp1 = (int)((float)qValue * RPM2Q15_FACTOR);
+    qTemp1 = (int)((float)sValueRpm * RPM2Q15_FACTOR);
     
-    GucUartTxBuf[5] = *((uint8 *)(&sTemp1));
-    GucUartTxBuf[6] = *((uint8 *)(&sTemp1) + 1);
+    GucUartTxBuf[5] = *((uint8 *)(&qTemp1));
+    GucUartTxBuf[6] = *((uint8 *)(&qTemp1) + 1);
     
     for (i = 1; i < 7; i++) {
         cSumCheck += GucUartTxBuf[i];

@@ -3,9 +3,9 @@
 
 /////////////////////////////////////////////////
 /**********************************************************/
-typedef 	unsigned char	u8;
-typedef 	unsigned int	u16;
-typedef 	unsigned long	u32; 
+typedef 	unsigned char idata	u8;
+typedef 	unsigned int  idata	u16;
+typedef 	unsigned long idata	u32; 
 //包含本头文件后,不用另外再包含"REG51.H"
 
 //内核特殊功能寄存器        // 复位值   描述

@@ -30,7 +30,7 @@
 #define FMSTR_CAN_RX_INTERRUPT 28   /* HC08-only: MSCAN RX and MSCAN TX interrupt numbers */
 #define FMSTR_CAN_TX_INTERRUPT 29   /*            (or use VECTOR statements in PRM file) */
 
-#define FMSTR_DISABLE          1    /* To disable all FreeMASTER functionalities */
+#define FMSTR_DISABLE          0    /* To disable all FreeMASTER functionalities */
 #define FMSTR_USE_SCI          1    /* To select SCI communication interface */
 #define FMSTR_USE_MSCAN        0    /* To selecet MSCAN communication interface */
 #define FMSTR_USE_USB_CDC      0    /* To select USB CDC communication interface */
