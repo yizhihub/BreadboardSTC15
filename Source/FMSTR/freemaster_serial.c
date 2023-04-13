@@ -1365,8 +1365,8 @@ FMSTR_BOOL FMSTR_Rx(FMSTR_BCHR nRxChar)
         {
              /* there is no length information in the following report data */
              pflg->flg.bRxMsgLengthNext = 0U;
-             pcm_nRxTodo = 5;                        //  2B 00 AA BB 9B, this byte + data length + checksum
-        }
+             pcm_nRxTodo = 8;                        //  2B 00 AA BB 9B, this byte + data length + checksum
+        }                                            //  2B 00 0F 15 00 00 00 00 04 D8   不带00 还需要接受8个字节
 
         /* command code stored & processed */
         pflg->flg.bRxLastCharSOB = 0U;

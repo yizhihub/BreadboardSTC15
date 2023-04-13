@@ -1,7 +1,6 @@
 #include "common.h"
 #include "isr.h"
 #include "boled.h"
-#include "bLCD.h"
 #include "bkey.h"
 #include "bSHT3x.h"
 #include "uart.h"
@@ -32,6 +31,18 @@ char code  pcVerStr3[] = VER_ID;
 char xdata cVerID[]    = VER_ID;
 char xdata cBuidT[]    = __TIME__;
 
+/*
+ *  设立一个N行，2列的数组。 第一列为变量得地址，第二列为变量得大小。
+ */
+uint16_t GVarAddrArray[4][2] = 
+{
+    {ADDR_BUSVOL,   2},
+    {ADDR_SPEEDACT, 2},
+    {0x0044,        2},                                                 /* fault.Current.Is*/
+    {0x007F,        1},                                                 /* mcFaultSource   */
+};
+
+
 void port_init(void)
 {
     P2 = 0xFC;               // 按键配置, 充当接地。
@@ -49,7 +60,8 @@ void port_init(void)
 void main(void)
 {
     int16_t data sSpeedSet = 0, sSpdAct;
-    float   data fVolAct;
+    int8_t  data mcFaultSource;
+    float   data fVolAct, fIsAct;
     uint16_t data sVccPower, sVbgMv, sTimeCnt1 = 0;
     uint8_t  data ucTmp[2];
 #if defined(PORT_IIC)
@@ -103,7 +115,8 @@ void main(void)
     OLED_Print(0, OLED_LINE1, "当前电压:-----V", BLUE);
     OLED_Print(0, OLED_LINE2, "当前转速:-----RPM", BLUE);
     OLED_Print(0, OLED_LINE3, "设定转速:-----RPM", BLUE);
-   
+    OLED_Print(0, OLED_LINE4, "Fault:-- Is:---", BLUE);
+    
     AUXR &= 0x7F;			//定时器时钟12T模式
     TMOD &= 0xF0;			//设置定时器模式
     TL0 = 0xF0;				//设置定时初始值
@@ -159,7 +172,7 @@ void main(void)
                         break;
                     
                     case KEY_RIGHT:
-                        uartAppSetupScope(ADDR_BUSVOL, ADDR_SPEEDACT);
+                        uartAppSetupScope(GVarAddrArray, 4);
                         break;
                     default :
                         break;
@@ -168,8 +181,12 @@ void main(void)
                 GbReportFlg = 0;
                 fVolAct = Gq15ReportData[0] * (MAX_VOLTAG_SCALE / 32768.0f);
                 sSpdAct = ((long)Gq15ReportData[1] * MAX_SPEED_SCALE) / 32768;
-                OLED_PutNumber(36 + 28, OLED_LINE1, fVolAct, 3, 1, 0, 8, RED);
-                OLED_PutNum(36 + 28, OLED_LINE2, sSpdAct, 5, 8, RED);
+                fIsAct  = Gq15ReportData[2] * (MAX_CURRENT_SCALE / 32768.0f);
+                mcFaultSource =  *((uint8 *)&Gq15ReportData[3]);
+                OLED_PutNumber(36 + 28, OLED_LINE1, fVolAct, 3, 1,  0,  8, RED);
+                OLED_PutNum(   36 + 28, OLED_LINE2, sSpdAct, 5, 8, RED);
+                OLED_PutNum(   48,      OLED_LINE4, mcFaultSource, 2, 8, GREEN);
+                OLED_PutNumber(96,      OLED_LINE4, fIsAct,  1, 1, "A", 8, GREEN); 
            
             } else if (sTimeCnt1++ >= 59 && GbSetupScopeSent) {
                     sTimeCnt1 = 0;
@@ -181,8 +198,8 @@ void main(void)
                      * 下面两条FMSTR发送命令 uartAppSetupScope、uartAppSendThrot若仅邻会导致第二条指令下位机接收不到或者不处理，原因未作探究。
                      * 故采用下面办法先发送SetupScope, 然后执行显示函数，大概会用掉10ms左右，然后延时50ms(必须)，然后执行SendThrot。
                      */
-                    uartAppSetupScope(ADDR_BUSVOL, ADDR_SPEEDACT);
-                    OLED_PutStr(36, OLED_LINE4, "CONNECTED", 8, GREEN);
+                    uartAppSetupScope(GVarAddrArray, 4);
+                    OLED_PutStr(36, OLED_LINE0, "CONNECTED", 6, GREEN);
                     sSpeedSet = 800;
                     OLED_PutNum(36 + 28, OLED_LINE3, sSpeedSet, 5, 8, RED);
                     msDelay(50);
@@ -192,7 +209,7 @@ void main(void)
                     GbBluetoothOK    = 1;
                 }
                 if (!BT_STATE && (GbBluetoothOK == 1)) {
-                    OLED_PutStr(36, OLED_LINE4, "         ", 8, WHITE);
+                    OLED_PutStr(36, OLED_LINE0, "         ", 6, WHITE);
                     GbBluetoothOK = 0;
                     GbSetupScopeSent = 0;
                 }

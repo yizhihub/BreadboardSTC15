@@ -8,12 +8,14 @@
 
 #if defined(REMOTER_FU6812)
     #define MAX_SPEED_SCALE 5000
+    #define MAX_CURRENT_SCALE 100.0f
     #define MAX_VOLTAG_SCALE (732.941f)
     #define ADDR_SPEEDREF    0x014A
     #define ADDR_BUSVOL      0x001A
     #define ADDR_SPEEDACT    0x002C
 #elif defined(REMOTER_FU6832)
     #define MAX_SPEED_SCALE 7000
+    #define MAX_CURRENT_SCALE 22.0f
     #define MAX_VOLTAG_SCALE (60.0f)
     #define ADDR_SPEEDREF    0x005C
     #define ADDR_BUSVOL      0x0001
@@ -53,7 +55,7 @@ void UART_Print(Uart_e uart,char *s,uint m,uint n,uint o,uint32 p);
 //void UART2_Print(char *s,uint m,uint n,uint o,uint p);
 //void UART2_printf(const char *fmt,...);
 void uartAppSendThrot(int16_t sValueRpm);
-void uartAppSetupScope(uint16_t usAddr1, uint16_t usAddr2);
+void uartAppSetupScope(uint16_t ppAddr[][2], uint8_t ucNum);
 void uartAppReadScope(void);
 void FMSTR_WriteVar16(uint16_t usAddr, int16_t sValue);
 void FMSTR_WriteVar8(uint16_t usAddr,  uint8_t ucValue);

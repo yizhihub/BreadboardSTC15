@@ -333,28 +333,37 @@ void FMSTR_WriteVar8(uint16_t usAddr, uint8_t ucValue)
     
     uartPutBuf(uart1, GucUartTxBuf, 7);
 }
-
-void uartAppSetupScope(uint16_t usAddr1, uint16_t usAddr2)
+/**
+*********************************************************************************************************
+** @nameis uartAppSetupScope
+** @effect setup要获取的变量
+** @import pAddr 要获取变量的地址 和 变量的大小，ucNum 要获取几个变量
+** @export none
+** @return none
+** @create yizhi 2023.03.27
+** @modify  
+*********************************************************************************************************/
+void uartAppSetupScope(uint16_t ppAddr[][2], uint8_t ucNum)
 {
-    uint8_t i, ucSumCheck = 0;
+    uint8_t i, j = 1, ucSumCheck = 0;
     
-    GucUartTxBuf[1] = 0x08;   // commander message
-    GucUartTxBuf[2] = 0x07;   // length of payload
-    GucUartTxBuf[3] = 0x02;   // number of var's addrresses to send
+    GucUartTxBuf[j++] = 0x08;   // commander message
+    GucUartTxBuf[j++] = 1 + 3 * ucNum;   // length of payload
+    GucUartTxBuf[j++] = ucNum;   // number of var's addrresses to send
     
-    GucUartTxBuf[4] = 0x02;   // size of var1 
-    GucUartTxBuf[5] = *((uint8_t *)&usAddr1);
-    GucUartTxBuf[6] = *((uint8_t *)&usAddr1 + 1);
-    GucUartTxBuf[7] = 0x02;   // size of var2
-    GucUartTxBuf[8] = *((uint8_t *)&usAddr2);
-    GucUartTxBuf[9] = *((uint8_t *)&usAddr2 + 1);
+    for (i = 0; i < ucNum; i++) {
+        
+        GucUartTxBuf[j++] = ppAddr[i][1];   // size of var1 
+        GucUartTxBuf[j++] = *((uint8_t *)&ppAddr[i][0]);
+        GucUartTxBuf[j++] = *((uint8_t *)&ppAddr[i][0] + 1);
+    }
     
-    for (i = 1; i < 10; i++) {
+    for (i = 1; i < j; i++) {
         ucSumCheck +=GucUartTxBuf[i];
     }
-    GucUartTxBuf[10] = 0x100 - ucSumCheck;   // checksum 
+    GucUartTxBuf[j] = 0x100 - ucSumCheck;   // checksum 
     
-    uartPutBuf(uart1, GucUartTxBuf, 11);    // PS 其实这几个App函数可以借助FreeMaster的协议层发送，协议层每个循环发送一个字节更合理。
+    uartPutBuf(uart1, GucUartTxBuf, j + 1);    // PS 其实这几个App函数可以借助FreeMaster的协议层发送，协议层每个循环发送一个字节更合理。
 }
 
 void uartAppReadScope(void)
