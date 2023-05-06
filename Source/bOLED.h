@@ -21,11 +21,12 @@
 #endif
 
 /*
- * slection among CHIP_SSD1306,CHIP_SH1106,CHIP_SSD1309,CHIP_SSD1331,CHIP_SSD1351, CHIP_ST7735
+ * slection among CHIP_SSD1306,CHIP_SH1106,CHIP_SSD1309,CHIP_SSD1331,CHIP_SSD1351, CHIP_ST7735, 
+ * CHIP_SSD1322, CHIP_ST7789V2
  */
-#define CHIP_ST7735  
+#define CHIP_SSD1309  
 
-#if  defined(CHIP_SSD1331) || defined(CHIP_SSD1351) || defined(CHIP_ST7735)
+#if  defined(CHIP_SSD1331) || defined(CHIP_SSD1351) || defined(CHIP_ST7735) || defined(CHIP_SSD1322) || defined(CHIP_ST7789V2)
 #define OLED_COLOR
 #endif
 
@@ -64,6 +65,22 @@
     #define OLED_HIGH    80
     #define LINE_HEIGHT  16
     #define OLED_LINE_MAX  4*LINE_HEIGHT
+#elif defined(CHIP_SSD1322)                                             /* 基于目前的列行式字模 该IC仅支持竖屏显示 64x256  */
+    #undef OLED_WIDTH
+    #undef OLED_HIGH
+    #undef LINE_HEIGHT
+    #define OLED_WIDTH   64
+    #define OLED_HIGH    256
+    #define LINE_HEIGHT  16
+    #define OLED_LINE_MAX  15*LINE_HEIGHT
+#elif defined(CHIP_ST7789V2)
+    #undef OLED_WIDTH
+    #undef OLED_HIGH
+    #undef LINE_HEIGHT
+    #define OLED_WIDTH   240
+    #define OLED_HIGH    280
+    #define LINE_HEIGHT  16
+    #define OLED_LINE_MAX  16*LINE_HEIGHT
 #else
     #define OLED_LINE_MAX  3*LINE_HEIGHT
 #endif
@@ -83,12 +100,20 @@
 #define OLED_LINE5 5*LINE_HEIGHT
 #define OLED_LINE6 6*LINE_HEIGHT
 #define OLED_LINE7 7*LINE_HEIGHT
+#define OLED_LINE8 8*LINE_HEIGHT
+#define OLED_LINE9 9*LINE_HEIGHT
+#define OLED_LINE10 10*LINE_HEIGHT
+#define OLED_LINE11 11*LINE_HEIGHT
+#define OLED_LINE12 12*LINE_HEIGHT
+#define OLED_LINE13 13*LINE_HEIGHT
+#define OLED_LINE14 14*LINE_HEIGHT
+#define OLED_LINE15 15*LINE_HEIGHT
 /*
  * other alternative feature
  */
 #define FEATURE_F6x8
 #define FEATURE_F8x16
-//#define FEATURE_F16x32
+#define FEATURE_F16x32
 #define FEATURE_HANZI
 //#define FEATURE_BMP
 
@@ -157,8 +182,11 @@ sbit OLED_CS = P1^2;
 #define OLED_DC_1     GPIOB->BSRR = 1 << 4// //OLED_DC  = 1
 #define OLED_CS_0     GPIOB->BRR  = 1 << 6// //OLED_CS  = 0
 #define OLED_CS_1     GPIOB->BSRR = 1 << 6// //OLED_CS  = 1      /* 改为BRR BSRR寄存器 5.5958ms -> 4.4171ms  */
+
+#if defined(CHIP_ST7735) || defined(CHIP_ST7789V2) 
 #define LCD_BLK_0     GPIOB->BRR  = 1 << 8
 #define LCD_BLK_1     GPIOB->BSRR = 1 << 8
+#endif
 
 #elif defined(RT1052)
 /* OLED Pin Group 1*/
