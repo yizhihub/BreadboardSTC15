@@ -181,6 +181,8 @@ FMSTR_BPTR FMSTR_GetReportData(FMSTR_BPTR pMessageIO)
     /* Get report data  */
     pMessageIO = FMSTR_ValueFromBuffer16(&Gq15ReportData[0], pMessageIO);
     pMessageIO = FMSTR_ValueFromBuffer16(&Gq15ReportData[1], pMessageIO);
+    pMessageIO = FMSTR_ValueFromBuffer16(&Gq15ReportData[2], pMessageIO);
+    pMessageIO = FMSTR_ValueFromBuffer8(&Gq15ReportData[3], pMessageIO);
     GbReportFlg = 1;
     
 
