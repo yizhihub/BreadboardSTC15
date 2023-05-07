@@ -22,12 +22,15 @@
 
 /*
  * slection among CHIP_SSD1306,CHIP_SH1106,CHIP_SSD1309,CHIP_SSD1331,CHIP_SSD1351, CHIP_ST7735, 
- * CHIP_SSD1322, CHIP_ST7789V2
+ * CHIP_SSD1322, CHIP_ST7789V2, CHIP_SSD1312(i2c)。 
  */
-#define CHIP_SSD1309  
 
 #if  defined(CHIP_SSD1331) || defined(CHIP_SSD1351) || defined(CHIP_ST7735) || defined(CHIP_SSD1322) || defined(CHIP_ST7789V2)
 #define OLED_COLOR
+#endif
+
+#if defined(CHIP_SSD1312)
+#define OLED_I2C
 #endif
 
 #define XLevelL		0x00
@@ -113,7 +116,7 @@
  */
 #define FEATURE_F6x8
 #define FEATURE_F8x16
-#define FEATURE_F16x32
+//#define FEATURE_F16x32
 #define FEATURE_HANZI
 //#define FEATURE_BMP
 
@@ -202,16 +205,32 @@ sbit OLED_CS = P1^2;
 //#define OLED_CS_1     GPIO1->DR  |= (1 << 20)
 
 /* OLED Pin Group 2*/
-#define OLED_SCL_0    GPIO5->DR  &= ~(1 << 1)
-#define OLED_SCL_1    GPIO5->DR  |=  (1 << 1)
-#define OLED_SDA_0    GPIO3->DR  &= ~(1 << 5)
-#define OLED_SDA_1    GPIO3->DR  |= (1 << 5)
-#define OLED_RST_0    GPIO3->DR  &= ~(1 << 3)
-#define OLED_RST_1    GPIO3->DR  |= (1 << 3)
-#define OLED_DC_0     GPIO2->DR  &= ~(1 << 31)
-#define OLED_DC_1     GPIO2->DR  |= (1 << 31)
-#define OLED_CS_0     GPIO1->DR  &= ~(1 << 21)
-#define OLED_CS_1     GPIO1->DR  |= (1 << 21)
+//#define OLED_SCL_0    GPIO5->DR  &= ~(1 << 1)
+//#define OLED_SCL_1    GPIO5->DR  |=  (1 << 1)
+//#define OLED_SDA_0    GPIO3->DR  &= ~(1 << 5)
+//#define OLED_SDA_1    GPIO3->DR  |= (1 << 5)
+//#define OLED_RST_0    GPIO3->DR  &= ~(1 << 3)
+//#define OLED_RST_1    GPIO3->DR  |= (1 << 3)
+//#define OLED_DC_0     GPIO2->DR  &= ~(1 << 31)
+//#define OLED_DC_1     GPIO2->DR  |= (1 << 31)
+//#define OLED_CS_0     GPIO1->DR  &= ~(1 << 21)
+//#define OLED_CS_1     GPIO1->DR  |= (1 << 21)
+
+/* OLED I2C Pin Group 3*/
+#define OLED_SCLK_Clr() GPIO4->DR &= ~(1 << 12u);
+#define OLED_SCLK_Set() GPIO4->DR |= (1 << 12u);
+
+#define OLED_SDIN_Clr() GPIO4->DR &= ~(1 << 11u);
+#define OLED_SDIN_Set() GPIO4->DR |= (1 << 11u);
+
+
+#define OLED_SDIN_DIR_IN()   GPIO4->GDIR &= ~(1 << 11u)
+#define OLED_SDIN_DIR_OUT()  GPIO4->GDIR |= (1 << 11u)
+#define OLED_SDIN_BIT()     (GPIO4->DR & (1 << 11u))
+
+#define OLED_CMD  0
+#define OLED_DATA 1
+
 #endif
 
 void SPI_WrDat(unsigned char dat);
@@ -224,21 +243,21 @@ void OLED_DrawBMP(uint8_t x0,uint8_t y0,uint8_t x1,uint8_t y1);
 void OLED_PutHan(uint8_t x,uint8_t y,uint8_t ch[], uint16_t ucYn);
 void OLED_Print(uint8_t x, uint8_t y, uint8_t ch[], uint16_t ucYn);
 /* 字符显示 */
-void OLED_PutChar(uint8_t x,uint8_t y,uint8_t wan, u8 ucSize, uint16_t ucYn);
-void OLED_PutStr(uint8_t x,uint8_t y,uint8_t ch[], u8 ucSize, uint16_t ucYn);
+void OLED_PutChar(uint8_t x,uint8_t y,uint8_t wan, uint8_t ucSize, uint16_t ucYn);
+void OLED_PutStr(uint8_t x,uint8_t y,uint8_t ch[], uint8_t ucSize, uint16_t ucYn);
 /* 数值显示 */
-void OLED_PutNum(uint8_t x,uint8_t y,int m, uint8_t ucLen, u8 ucSize, uint16_t ucYn);
-void OLED_PutNumber(u8 x,u8 y,float m, u8 M, u8 N, char* pUnit, u8 ucSize, uint16_t ucYn);
+void OLED_PutNum(uint8_t x,uint8_t y,int m, uint8_t ucLen, uint8_t ucSize, uint16_t ucYn);
+void OLED_PutNumber(uint8_t x,uint8_t y,float m, uint8_t M, uint8_t N, char* pUnit, uint8_t ucSize, uint16_t ucYn);
 
 /* 特殊数值显示 */
 void OLED_P16x32Num(uint8_t p,int num,uint8_t unit);// 特大字体
-void OLED_HexDisp(uint8_t x,uint8_t y,uint8_t *dat,uint8_t N, u8 ucSize, uint16_t ucYn);
+void OLED_HexDisp(uint8_t x,uint8_t y,uint8_t *dat,uint8_t N, uint8_t ucSize, uint16_t ucYn);
 void OLED_P16x32Time(uint8_t p, RTC_Time_s *ptTime);//大字体时钟显示
-void OLED_PutTime(u8 x,u8 y,RTC_Time_s * time, u8 ucSize, uint16_t ucYn);//小字体时钟显示;
+void OLED_PutTime(uint8_t x,uint8_t y,RTC_Time_s * time, uint8_t ucSize, uint16_t ucYn);//小字体时钟显示;
 void timeClockStep(RTC_Time_s *ptTime);
 
-extern u16 BACK_COLOR;
-extern u16 FRONT_COLOR;
+extern uint16_t BACK_COLOR;
+extern uint16_t FRONT_COLOR;
 //颜色
 #define WHITE         	 0xFFFF
 #define BLACK         	 0x0000	  

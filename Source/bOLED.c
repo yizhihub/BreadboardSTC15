@@ -1,7 +1,7 @@
 #include "boled.h"
 
-u16 BACK_COLOR = BLACK;
-u16 FRONT_COLOR = YELLOW;
+uint16_t BACK_COLOR = BLACK;
+uint16_t FRONT_COLOR = YELLOW;
 
 #ifdef FEATURE_F8x16
 //======================================================
@@ -446,6 +446,206 @@ CONST_DATA unsigned char Scale1_8x128[]=
 };
 #endif
 
+#ifdef OLED_I2C
+void usDelayOne()
+{
+    uint8_t i;
+    for (i = 0; i < 20; ++i) {
+        __asm("NOP");
+    }
+}
+
+/**********************************************
+//IIC Start
+**********************************************/
+void IIC_Start()
+{
+
+	OLED_SCLK_Set() ;
+	OLED_SDIN_Set();
+     usDelayOne();
+	OLED_SDIN_Clr();
+     usDelayOne();
+	OLED_SCLK_Clr();                                                      /* there might be a delay */
+}
+
+/**********************************************
+//IIC Stop
+**********************************************/
+void IIC_Stop()
+{
+    OLED_SCLK_Set() ;
+	OLED_SDIN_Clr();
+    usDelayOne();
+	OLED_SDIN_Set();
+    usDelayOne();
+
+}
+
+void IIC_Respons()
+{
+    /**
+     * 1. The follow either OLED_SDIN_Set or usDelayOne(a longer delay),which is indispensable
+     * 2. a usDelayOne() is enough for SS1306, but SS1312 need two usDealyOne() for stable.
+     */
+    OLED_SDIN_Set();
+    usDelayOne();
+    usDelayOne();
+
+    OLED_SCLK_Set();
+    /*
+     *  it task me 1.5 hour to figureout here can not be place a usDelayOne(), but why ?
+     */
+	OLED_SCLK_Clr();                                                 /* there might be a delay */
+}
+
+
+void IIC_Answer(uint8_t ucAns) // 主机应答期间， 1 应答 0 不应答
+{
+	 if(ucAns==1)
+	 {
+		 OLED_SDIN_Clr();
+		 usDelayOne();
+	 }
+	 else
+	 {
+         OLED_SDIN_Set();
+	     usDelayOne();
+	  }
+      OLED_SCLK_Set();
+      usDelayOne();// 等待slave读取应答信号
+      OLED_SCLK_Clr();
+}
+
+/**********************************************
+// IIC Write byte
+**********************************************/
+
+void Write_IIC_Byte(unsigned char IIC_Byte)
+{
+	unsigned char i;
+	unsigned char m,da;
+	da=IIC_Byte;
+	OLED_SCLK_Clr();
+	for(i=0;i<8;i++)
+	{
+        m=da;
+		m=m&0x80;
+		if(m==0x80) {
+            OLED_SDIN_Set();
+        } else {
+            OLED_SDIN_Clr();
+        }
+        usDelayOne();
+        da=da<<1;
+		OLED_SCLK_Set();
+        usDelayOne();
+		OLED_SCLK_Clr();
+    }
+}
+
+/*********************************************************************************************************
+** Function name: Read_IIC_Byte()
+** Descriptions : thsi is just for SS13xx register
+** Input para.  : none
+**
+** Output para. : the value read out
+** Returned Val :
+** Created by   : 2022/5/19 星期四, by yizhi
+** Created Date :
+**--------------------------------------------------------------------------------------------------------
+** Modified     :
+**
+*********************************************************************************************************/
+uint8_t Read_IIC_Byte(void)
+{
+    uint8_t ucData = 0;
+    uint8_t i;
+
+    // OLED_SCLK_Clr(); // is it indispensable ?
+    OLED_SDIN_DIR_IN();
+    usDelayOne();
+
+	for(i=0;i<8;i++)
+	{
+        ucData <<= 1;
+        OLED_SCLK_Set();
+        usDelayOne();
+
+        if(OLED_SDIN_BIT())
+            ucData |= 0x01;
+
+        OLED_SCLK_Clr();
+        usDelayOne();
+    }
+    OLED_SDIN_DIR_OUT();
+    usDelayOne();
+    return ucData;
+}
+/*********************************************************************************************************
+** Function name: Read_IIC_Data()
+** Descriptions : --
+** Input para.  :
+**
+** Output para. :
+** Returned Val :
+** Created by   : 2022/5/20 星期五,
+** Created Date :
+**--------------------------------------------------------------------------------------------------------
+** Modified     :
+**
+*********************************************************************************************************/
+uint8_t Read_IIC_Data(uint8_t ucReg)
+{
+    IIC_Start();
+    Write_IIC_Byte(0x78);
+    IIC_Respons();
+    Write_IIC_Byte(ucReg);
+    IIC_Respons();
+    IIC_Start();
+    Write_IIC_Byte(0x78 + 0x01);
+    IIC_Respons();
+    return Read_IIC_Byte();
+}
+
+/**********************************************
+// IIC Write Command
+**********************************************/
+void SPI_WrCmd(unsigned char IIC_Command)
+{
+    IIC_Start();
+    Write_IIC_Byte(0x78);            //Slave address,SA0=0
+    IIC_Respons();
+    Write_IIC_Byte(0x00);			//write command
+    IIC_Respons();
+    Write_IIC_Byte(IIC_Command);
+    IIC_Respons();
+    IIC_Stop();
+}
+/**********************************************
+// IIC Write Data
+**********************************************/
+void SPI_WrDat(unsigned char IIC_Data)
+{
+    IIC_Start();
+    Write_IIC_Byte(0x78);			//D/C#=0; R/W#=0
+    IIC_Respons();
+    Write_IIC_Byte(0x40);			//write data
+    IIC_Respons();
+    Write_IIC_Byte(IIC_Data);
+    IIC_Respons();
+    IIC_Stop();
+}
+void OLED_WR_Byte(unsigned dat,unsigned cmd)
+{
+    if(cmd) {
+        SPI_WrDat(dat);
+    } else {
+        SPI_WrCmd(dat);
+    }
+}
+
+#else 
 void SPI_WrDat(unsigned char dat)
 {
   unsigned char i=8;
@@ -493,32 +693,8 @@ void SPI_WrCmd(unsigned char cmd)
   OLED_DC_1;
 //  OLED_CS_1;
 }
-void OLED_Set_Pos(unsigned char x, unsigned char y)
-{ 
-  #ifdef CHIP_SH1106
-  x += 2;
-  #endif
-  SPI_WrCmd(0xb0+y);
-  SPI_WrCmd(x&0x0f);
-  SPI_WrCmd(((x&0xf0)>>4)|0x10);
-} 
-void OLED_PutPixel(uint8_t x,uint8_t y)
-{
-    SPI_WrCmd(0xb0+7-y/8);   //0xb0+0~7表示页0~页7?
-    #ifdef CHIP_SH1106    //0x00+0~16表示将128列分成16组其地址在某组中的第几列
-    SPI_WrCmd(0x02 + x%16);
-    #else 
-    SPI_WrCmd(0x00 + x%16);
-    #endif  
-    SPI_WrCmd(0x10 + x/16);     //0x10+0~16表示将128列分成16组其地址所在第几组
-    SPI_WrDat(0x80>>(y%8));
-}
+#endif
 
-void LCD_WrWord(u16 color)
-{
-    SPI_WrDat(color>>8);
-    SPI_WrDat(color);
-}
 /******************************************************************************
       函数说明：设置起始和结束地址
       入口数据：x1,x2 设置列的起始和结束地址
@@ -526,7 +702,13 @@ void LCD_WrWord(u16 color)
       返回值：  无
 ******************************************************************************/
 #ifdef OLED_COLOR
-void OLED_Address_Set(u16 x1,u16 y1,u16 x2,u16 y2)
+void LCD_WrWord(uint16_t color)
+{
+    SPI_WrDat(color>>8);
+    SPI_WrDat(color);
+}
+
+void OLED_Address_Set(uint16_t x1,uint16_t y1,uint16_t x2,uint16_t y2)
 {
 #if defined(CHIP_SSD1331)
     SPI_WrCmd(0x15);//列地址设置
@@ -571,10 +753,32 @@ void OLED_Address_Set(u16 x1,u16 y1,u16 x2,u16 y2)
     SPI_WrCmd(0x5c);
 #endif
 }
+#else 
+void OLED_Set_Pos(unsigned char x, unsigned char y)
+{ 
+    #ifdef CHIP_SH1106
+    x += 2;
+    #endif
+    SPI_WrCmd(0xb0+y);
+    SPI_WrCmd(x&0x0f);
+    SPI_WrCmd(((x&0xf0)>>4)|0x10);
+} 
+void OLED_PutPixel(uint8_t x,uint8_t y)
+{
+    SPI_WrCmd(0xb0+7-y/8);   //0xb0+0~7表示页0~页7?
+    #ifdef CHIP_SH1106    //0x00+0~16表示将128列分成16组其地址在某组中的第几列
+    SPI_WrCmd(0x02 + x%16);
+    #else 
+    SPI_WrCmd(0x00 + x%16);
+    #endif  
+    SPI_WrCmd(0x10 + x/16);     //0x10+0~16表示将128列分成16组其地址所在第几组
+    SPI_WrDat(0x80>>(y%8));
+}
+
 #endif 
 
 #if defined(OLED_COLOR) 
-void LCD_DrawPoint(u8 x, u8 y, u16 color)
+void LCD_DrawPoint(uint8_t x, uint8_t y, uint16_t color)
 {
     OLED_Address_Set(x,y,x,y);
     SPI_WrDat(color>>8);
@@ -643,7 +847,133 @@ void OLED_Init(void)
     GPIO_SetBits(GPIOB, GPIO_Pin_0 | GPIO_Pin_2 | GPIO_Pin_4 | GPIO_Pin_6 | GPIO_Pin_8);
 #endif
     
- 
+#ifdef OLED_I2C
+    #define USE_HORIZONTAL 90
+    volatile uint8_t ucReadVal = 0;
+
+    /**
+     * Use a strategy (斯拽TeiG) to distingguish between SS1312 and SS1306
+     *       operation                 SS1312      SS1306
+     *    Read_IIC_Data(0xd3);    // 0x01(0x41)  0x03(0x43)
+     *    Read_IIC_Data(0xd5);    // 0x01(0x41)  0x03(0x43)
+     *    Read_IIC_Data(0xd9);    // 0x01(0x41)  0x03(0x43)
+     *    Read_IIC_Data(0xda);    // 0x01(0x41)  0x03(0x43)
+     *    Read_IIC_Data(0xdb);    // 0x01(0x41)  0x03(0x43)
+     *    Read_IIC_Data(0x8d);    // 0x01(0x41)  0x03(0x43)
+     */
+    ucReadVal = Read_IIC_Data(0xd3);
+    if ((ucReadVal & 0x03) == 0x03)  {
+
+        OLED_WR_Byte(0xAE,OLED_CMD);//关闭显示
+
+        OLED_WR_Byte(0x40,OLED_CMD);//---set low column address
+        OLED_WR_Byte(0xB0,OLED_CMD);//---set high column address
+
+        OLED_WR_Byte(0xC8,OLED_CMD);//-not offset
+
+        OLED_WR_Byte(0x81,OLED_CMD);//设置对比度
+        OLED_WR_Byte(0xff,OLED_CMD);
+
+        OLED_WR_Byte(0xa1,OLED_CMD);//段重定向设置
+
+        OLED_WR_Byte(0xa6,OLED_CMD);//
+
+        OLED_WR_Byte(0xa8,OLED_CMD);//设置驱动路数
+        OLED_WR_Byte(0x1f,OLED_CMD);
+
+        OLED_WR_Byte(0xd3,OLED_CMD);
+        OLED_WR_Byte(0x00,OLED_CMD);
+
+        OLED_WR_Byte(0xd5,OLED_CMD);
+        OLED_WR_Byte(0xf0,OLED_CMD);
+
+        OLED_WR_Byte(0xd9,OLED_CMD);
+        OLED_WR_Byte(0x22,OLED_CMD);
+
+        OLED_WR_Byte(0xda,OLED_CMD);
+        OLED_WR_Byte(0x02,OLED_CMD);
+
+        OLED_WR_Byte(0xdb,OLED_CMD);
+        OLED_WR_Byte(0x49,OLED_CMD);
+
+        OLED_WR_Byte(0x8d,OLED_CMD);
+        OLED_WR_Byte(0x14,OLED_CMD);
+
+        OLED_WR_Byte(0xaf,OLED_CMD);
+        OLED_Fill(0x00);
+    } else {
+        OLED_WR_Byte(0xAE,OLED_CMD);//--turn off oled panel
+
+        OLED_WR_Byte(0x00,OLED_CMD);    /*set lower column address*/
+        OLED_WR_Byte(0x10,OLED_CMD);    /*set higher column address*/
+
+        OLED_WR_Byte(0xB0,OLED_CMD);    /*set page address*/
+
+        OLED_WR_Byte(0x81,OLED_CMD);    /*contract control*/
+        OLED_WR_Byte(0x5f,OLED_CMD);    /*128*/
+
+        if(USE_HORIZONTAL==0)
+        {
+            OLED_WR_Byte(0x20,OLED_CMD);    /* Set Memory addressing mode (0x20/0x21) */
+            OLED_WR_Byte(0x09,OLED_CMD);     /* 0x09 */
+
+            OLED_WR_Byte(0xA1,OLED_CMD);    /*set segment remap  0XA1 */
+            OLED_WR_Byte(0xC8,OLED_CMD);    /*Com scan direction   0Xc8  */
+        }
+        else if(USE_HORIZONTAL==90)
+        {
+            OLED_WR_Byte(0x20,OLED_CMD);    /* Set Memory addressing mode (0x20/0x21) */
+            OLED_WR_Byte(0x02,OLED_CMD);     /* 0x02 */
+
+            OLED_WR_Byte(0xA1,OLED_CMD);    /*set segment remap  0XA1 */
+            OLED_WR_Byte(0xC0,OLED_CMD);    /*Com scan direction   0Xc0  */
+        }
+        else if(USE_HORIZONTAL==180)
+        {
+            OLED_WR_Byte(0x20,OLED_CMD);    /* Set Memory addressing mode (0x20/0x21) */
+            OLED_WR_Byte(0x09,OLED_CMD);     /* 0x09 */
+
+            OLED_WR_Byte(0xA0,OLED_CMD);    /*set segment remap  0XA0 */
+            OLED_WR_Byte(0xC0,OLED_CMD);    /*Com scan direction   0Xc0  */
+        }
+        else if(USE_HORIZONTAL==270)
+        {
+            OLED_WR_Byte(0x20,OLED_CMD);    /* Set Memory addressing mode (0x20/0x21) */
+            OLED_WR_Byte(0x02,OLED_CMD);     /* 0x02 */
+
+            OLED_WR_Byte(0xA0,OLED_CMD);    /*set segment remap  0XA0 */
+            OLED_WR_Byte(0xC8,OLED_CMD);    /*Com scan direction   0Xc8  */
+        }
+
+        OLED_WR_Byte(0xA4,OLED_CMD);    /*Disable Entire Display On (0xA4/0xA5)*/
+
+        OLED_WR_Byte(0xA6,OLED_CMD);    /*normal / reverse*/
+
+        OLED_WR_Byte(0xA8,OLED_CMD);    /*multiplex ratio*/
+        OLED_WR_Byte(0x3F,OLED_CMD);    /*duty = 1/64*/
+
+        OLED_WR_Byte(0xD3,OLED_CMD);    /*set display offset*/
+        OLED_WR_Byte(0x00,OLED_CMD);    /*   0x20   */
+
+        OLED_WR_Byte(0xD5,OLED_CMD);    /*set osc division*/
+        OLED_WR_Byte(0x80,OLED_CMD);
+
+        OLED_WR_Byte(0xD9,OLED_CMD);    /*set pre-charge period*/
+        OLED_WR_Byte(0x22,OLED_CMD);
+
+        OLED_WR_Byte(0xDA,OLED_CMD);    /* Set SEG Pins Hardware Configuration */
+        OLED_WR_Byte(0x10,OLED_CMD);
+
+        OLED_WR_Byte(0xdb,OLED_CMD);    /*set vcomh*/
+        OLED_WR_Byte(0x30,OLED_CMD);
+
+        OLED_WR_Byte(0x8d,OLED_CMD);    /*set charge pump enable*/
+        OLED_WR_Byte(0x72,OLED_CMD);    /* 0x12:7.5V; 0x52:8V;  0x72:9V;  0x92:10V */
+        OLED_Fill(0x00);
+        OLED_WR_Byte(0xAF,OLED_CMD);
+    }
+
+#else
     OLED_RST_0;   // 上电复位
     msDelay(10);
     OLED_RST_1;
@@ -1046,7 +1376,8 @@ void OLED_Init(void)
     OLED_Fill(0x00);  //初始清屏
     SPI_WrCmd(0xaf);//--turn on oled panel
     OLED_Set_Pos(0,0);}
-#endif   /* NOT SSD1331 */
+#endif   /* NOT SSD1331 */  
+#endif  /*  NOT OLED_I2C */
 }
 
 /* m^n */  
@@ -1066,13 +1397,13 @@ uint32_t mypow(uint8_t m,uint8_t n)
 ** @create yizhi 2023.03.27
 ** @modify  
 *********************************************************************************************************/
-void OLED_PutChar(uint8_t x,uint8_t y,uint8_t wan, u8 ucSize, uint16_t ucYn)
+void OLED_PutChar(uint8_t x,uint8_t y,uint8_t wan, uint8_t ucSize, uint16_t ucYn)
 {   
 #if defined(OLED_COLOR)
-    u8 pos,t,ucHeight;
+    uint8_t pos,t,ucHeight;
     u32 ulTemp;
 #else
-    u8 i, j, ucTemp;
+    uint8_t i, j, ucTemp;
 #endif
     if(x > (OLED_WIDTH - ucSize))   return; 
     if (ucSize <= 8) {
@@ -1205,7 +1536,7 @@ void OLED_PutChar(uint8_t x,uint8_t y,uint8_t wan, u8 ucSize, uint16_t ucYn)
 //参数：显示的位置（x,y），y为页范围0～7，要显示的字符串
 //返回：无   yn=1  正常显示  yn=0 反黑显示 
 //==============================================================  
-void OLED_PutStr(uint8_t x,uint8_t y,uint8_t ch[], u8 ucSize, uint16_t ucYn)
+void OLED_PutStr(uint8_t x,uint8_t y,uint8_t ch[], uint8_t ucSize, uint16_t ucYn)
 {
     uint8_t j=0, wan;
     
@@ -1246,7 +1577,7 @@ void OLED_PutStr(uint8_t x,uint8_t y,uint8_t ch[], u8 ucSize, uint16_t ucYn)
 ** @create yizhi 2023.03.19
 ** @modify  
 *********************************************************************************************************/
-void OLED_PutNum(uint8_t x,uint8_t y,int m, uint8_t ucLen, u8 ucSize, uint16_t ucYn)
+void OLED_PutNum(uint8_t x,uint8_t y,int m, uint8_t ucLen, uint8_t ucSize, uint16_t ucYn)
 {
     int8_t i, ucNegative = 0;
     if (ucYn == 1) ucYn = FRONT_COLOR;
@@ -1302,7 +1633,7 @@ void OLED_PutNum(uint8_t x,uint8_t y,int m, uint8_t ucLen, u8 ucSize, uint16_t u
 ** @create yizhi 2023.03.19
 ** @modify 
 *********************************************************************************************************/
-void OLED_PutNumber(u8 x,u8 y,float m, u8 M, u8 N, char* pUnit, u8 ucSize, uint16_t ucYn)
+void OLED_PutNumber(uint8_t x,uint8_t y,float m, uint8_t M, uint8_t N, char* pUnit, uint8_t ucSize, uint16_t ucYn)
 {
 #if    0          //高位灭零  负号位置固定 小数点浮动 单位浮动
     uint8_t subshi,subbai;
@@ -1393,7 +1724,7 @@ void OLED_PutNumber(u8 x,u8 y,float m, u8 M, u8 N, char* pUnit, u8 ucSize, uint1
     ucLastOCCupy = x_temp;
 
 #else   // 固定小数点(整数部分右对齐)  高位灭零  负号位置跟随整数 单位位置固定
-    u16      m_int; 
+    uint16_t      m_int; 
     int8_t   i=0, negative=0;
     uint8_t  subshi, x_decimal;
 
@@ -1483,7 +1814,7 @@ void OLED_PutNumber(u8 x,u8 y,float m, u8 M, u8 N, char* pUnit, u8 ucSize, uint1
 #description:
 #author::  2016-03-21 by yizhi 
 ******************************************************************/
-void OLED_HexDisp(uint8_t x,uint8_t y,uint8_t *dat,uint8_t N, u8 ucSize, uint16_t ucYn)
+void OLED_HexDisp(uint8_t x,uint8_t y,uint8_t *dat,uint8_t N, uint8_t ucSize, uint16_t ucYn)
 {
 	uint8_t temp,i;
     if (ucYn == 1) ucYn = FRONT_COLOR;
@@ -1516,7 +1847,7 @@ void OLED_HexDisp(uint8_t x,uint8_t y,uint8_t *dat,uint8_t N, u8 ucSize, uint16_
 * @brief expect for the motify the define Don't forget the RCC_APB2PeriphClockCmd
 *********************************************************************
 */
-void OLED_PutTime(u8 x,u8 y,RTC_Time_s * time, u8 ucSize, uint16_t ucYn)
+void OLED_PutTime(uint8_t x,uint8_t y,RTC_Time_s * time, uint8_t ucSize, uint16_t ucYn)
 {
     if (ucYn == 1) ucYn = FRONT_COLOR;
 // OLED_PutChar(x,y,time->year%100/10+0x30); x+=8;

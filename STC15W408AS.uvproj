@@ -149,7 +149,7 @@
             <RestoreSysVw>1</RestoreSysVw>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>10</TargetSelection>
+          <TargetSelection>9</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -322,7 +322,7 @@
             <InterruptVectorAddress>0</InterruptVectorAddress>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>C51_PLATEFORM,</Define>
+              <Define>C51_PLATEFORM,CHIP_SSD1306</Define>
               <Undefine></Undefine>
               <IncludePath>.\Source;.\Source\Component;.\Source\FMSTR</IncludePath>
             </VariousControls>
