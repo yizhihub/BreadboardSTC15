@@ -13,7 +13,7 @@
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
-          <Device>STC15W408AS Series</Device>
+          <Device>STC15W408AS</Device>
           <Vendor>STC</Vendor>
           <Cpu>IRAM(0-0xFF) XRAM(0-0xFF) IROM(0-0x1FF8) CLOCK(35000000) MODP2</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -149,7 +149,7 @@
             <RestoreSysVw>1</RestoreSysVw>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>9</TargetSelection>
+          <TargetSelection>10</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -193,7 +193,7 @@
             <XDataHold>0</XDataHold>
             <UseOnchipRom>0</UseOnchipRom>
             <UseOnchipArithmetic>0</UseOnchipArithmetic>
-            <UseMultipleDPTR>1</UseMultipleDPTR>
+            <UseMultipleDPTR>0</UseMultipleDPTR>
             <UseOnchipXram>0</UseOnchipXram>
             <HadIRAM>1</HadIRAM>
             <HadXRAM>1</HadXRAM>
@@ -322,7 +322,7 @@
             <InterruptVectorAddress>0</InterruptVectorAddress>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>C51_PLATEFORM,CHIP_SSD1306</Define>
+              <Define>C51_PLATEFORM,CHIP_ST7735,OLED_SPI,</Define>
               <Undefine></Undefine>
               <IncludePath>.\Source;.\Source\Component;.\Source\FMSTR</IncludePath>
             </VariousControls>

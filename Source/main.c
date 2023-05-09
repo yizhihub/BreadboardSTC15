@@ -23,7 +23,7 @@ uint code  Vbg_ROM _at_ 0x1ff7;                  /* STC-ISP下载程序时写入Flash末
     #error "NO MCU SELECTED"
 #endif
 
-#define  VER_ID    "=FU6812Remoter230330a"
+#define  VER_ID    "=FU6812Remoter230509a"
 
 char code  pcVerStr1[] = __TIME__;
 char code  pcVerStr2[] = __DATE__;
@@ -110,12 +110,12 @@ void main(void)
     msDelay(1500);
     OLED_Fill(0x00);
 
-    OLED_PutStr(0, OLED_LINE0 + (LINE_HEIGHT >> 1), cVerID, 6, 1);
+//    OLED_PutStr(0, OLED_LINE0 + (LINE_HEIGHT >> 1), cVerID, 6, 1);
     
     OLED_Print(0, OLED_LINE1, "当前电压:-----V", BLUE);
     OLED_Print(0, OLED_LINE2, "当前转速:-----RPM", BLUE);
     OLED_Print(0, OLED_LINE3, "设定转速:-----RPM", BLUE);
-    OLED_Print(0, OLED_LINE4, "Fault:-- Is:---", BLUE);
+    OLED_PutStr(0, OLED_LINE0 + (LINE_HEIGHT >> 1), "Fault:-- Is:---", 6, BLUE);
     
     AUXR &= 0x7F;			//定时器时钟12T模式
     TMOD &= 0xF0;			//设置定时器模式
@@ -147,7 +147,7 @@ void main(void)
                 switch (eKeyPress)
                 {
                     case KEY_UP:
-                        if (sSpeedSet >= 500 && sSpeedSet < 2200) {
+                        if (sSpeedSet >= 500 && sSpeedSet < 4500) {
                             sSpeedSet += 50;
                             uartAppSendThrot(sSpeedSet);
                             OLED_PutNum(36 + 28, OLED_LINE3, sSpeedSet, 5, 8, RED);
@@ -185,8 +185,8 @@ void main(void)
                 mcFaultSource =  *((uint8 *)&Gq15ReportData[3]);
                 OLED_PutNumber(36 + 28, OLED_LINE1, fVolAct, 3, 1,  0,  8, RED);
                 OLED_PutNum(   36 + 28, OLED_LINE2, sSpdAct, 5, 8, RED);
-                OLED_PutNum(   48,      OLED_LINE4, mcFaultSource, 2, 8, GREEN);
-                OLED_PutNumber(96,      OLED_LINE4, fIsAct,  1, 1, "A", 8, GREEN); 
+                OLED_PutNum(   36,      OLED_LINE0 + (LINE_HEIGHT >> 1), mcFaultSource, 2, 6, GREEN);
+                OLED_PutNumber(72,      OLED_LINE0 + (LINE_HEIGHT >> 1), fIsAct,  1, 1, "A", 6, GREEN); 
            
             } else if (sTimeCnt1++ >= 59 && GbSetupScopeSent) {
                     sTimeCnt1 = 0;

@@ -451,7 +451,7 @@ void usDelayOne()
 {
     uint8_t i;
     for (i = 0; i < 20; ++i) {
-        __asm("NOP");
+         ___NOP();
     }
 }
 
@@ -461,12 +461,12 @@ void usDelayOne()
 void IIC_Start()
 {
 
-	OLED_SCLK_Set() ;
-	OLED_SDIN_Set();
-     usDelayOne();
-	OLED_SDIN_Clr();
-     usDelayOne();
-	OLED_SCLK_Clr();                                                      /* there might be a delay */
+    OLED_SCL_1 ;
+    OLED_SDA_1;
+    usDelayOne();
+    OLED_SDA_0;
+    usDelayOne();
+    OLED_SCL_0;                                                      /* there might be a delay */
 }
 
 /**********************************************
@@ -474,10 +474,10 @@ void IIC_Start()
 **********************************************/
 void IIC_Stop()
 {
-    OLED_SCLK_Set() ;
-	OLED_SDIN_Clr();
+    OLED_SCL_1 ;
+    OLED_SDA_0;
     usDelayOne();
-	OLED_SDIN_Set();
+    OLED_SDA_1;
     usDelayOne();
 
 }
@@ -488,15 +488,15 @@ void IIC_Respons()
      * 1. The follow either OLED_SDIN_Set or usDelayOne(a longer delay),which is indispensable
      * 2. a usDelayOne() is enough for SS1306, but SS1312 need two usDealyOne() for stable.
      */
-    OLED_SDIN_Set();
+    OLED_SDA_1;
     usDelayOne();
     usDelayOne();
 
-    OLED_SCLK_Set();
+    OLED_SCL_1;
     /*
      *  it task me 1.5 hour to figureout here can not be place a usDelayOne(), but why ?
      */
-	OLED_SCLK_Clr();                                                 /* there might be a delay */
+    OLED_SCL_0;                                                 /* there might be a delay */
 }
 
 
@@ -504,43 +504,43 @@ void IIC_Answer(uint8_t ucAns) // 主机应答期间， 1 应答 0 不应答
 {
 	 if(ucAns==1)
 	 {
-		 OLED_SDIN_Clr();
+		 OLED_SDA_0;
 		 usDelayOne();
 	 }
 	 else
 	 {
-         OLED_SDIN_Set();
+         OLED_SDA_1;
 	     usDelayOne();
 	  }
-      OLED_SCLK_Set();
+      OLED_SCL_1;
       usDelayOne();// 等待slave读取应答信号
-      OLED_SCLK_Clr();
+      OLED_SCL_0;
 }
 
 /**********************************************
 // IIC Write byte
 **********************************************/
 
-void Write_IIC_Byte(unsigned char IIC_Byte)
+void IIC_WriteByte(unsigned char IIC_Byte)
 {
 	unsigned char i;
 	unsigned char m,da;
 	da=IIC_Byte;
-	OLED_SCLK_Clr();
+	OLED_SCL_0;
 	for(i=0;i<8;i++)
 	{
         m=da;
 		m=m&0x80;
 		if(m==0x80) {
-            OLED_SDIN_Set();
+            OLED_SDA_1;
         } else {
-            OLED_SDIN_Clr();
+            OLED_SDA_0;
         }
         usDelayOne();
         da=da<<1;
-		OLED_SCLK_Set();
+		OLED_SCL_1;
         usDelayOne();
-		OLED_SCLK_Clr();
+		OLED_SCL_0;
     }
 }
 
@@ -557,33 +557,33 @@ void Write_IIC_Byte(unsigned char IIC_Byte)
 ** Modified     :
 **
 *********************************************************************************************************/
-uint8_t Read_IIC_Byte(void)
+uint8_t IIC_ReadByte(void)
 {
     uint8_t ucData = 0;
     uint8_t i;
 
-    // OLED_SCLK_Clr(); // is it indispensable ?
-    OLED_SDIN_DIR_IN();
+    // OLED_SCL_0; // is it indispensable ?
+    OLED_SDA_IN;
     usDelayOne();
 
-	for(i=0;i<8;i++)
-	{
+    for(i=0;i<8;i++)
+    {
         ucData <<= 1;
-        OLED_SCLK_Set();
+        OLED_SCL_1;
         usDelayOne();
 
-        if(OLED_SDIN_BIT())
+        if(OLED_SDA_R)
             ucData |= 0x01;
 
-        OLED_SCLK_Clr();
+        OLED_SCL_0;
         usDelayOne();
     }
-    OLED_SDIN_DIR_OUT();
+    OLED_SDA_OUT;
     usDelayOne();
     return ucData;
 }
 /*********************************************************************************************************
-** Function name: Read_IIC_Data()
+** Function name: Read_IIC_Data()   ——> OLED_ReadChar
 ** Descriptions : --
 ** Input para.  :
 **
@@ -595,57 +595,60 @@ uint8_t Read_IIC_Byte(void)
 ** Modified     :
 **
 *********************************************************************************************************/
-uint8_t Read_IIC_Data(uint8_t ucReg)
+uint8_t OLED_ReadChar(uint8_t ucReg)
 {
     IIC_Start();
-    Write_IIC_Byte(0x78);
+    IIC_WriteByte(0x78);
     IIC_Respons();
-    Write_IIC_Byte(ucReg);
+    IIC_WriteByte(ucReg);
     IIC_Respons();
     IIC_Start();
-    Write_IIC_Byte(0x78 + 0x01);
+    IIC_WriteByte(0x78 + 0x01);
     IIC_Respons();
-    return Read_IIC_Byte();
+    return IIC_ReadByte();
 }
 
 /**********************************************
 // IIC Write Command
 **********************************************/
-void SPI_WrCmd(unsigned char IIC_Command)
+void I2C_WrCmd(unsigned char IIC_Command)
 {
     IIC_Start();
-    Write_IIC_Byte(0x78);            //Slave address,SA0=0
+    IIC_WriteByte(0x78);            //Slave address,SA0=0
     IIC_Respons();
-    Write_IIC_Byte(0x00);			//write command
+    IIC_WriteByte(0x00);			//write command
     IIC_Respons();
-    Write_IIC_Byte(IIC_Command);
+    IIC_WriteByte(IIC_Command);
     IIC_Respons();
     IIC_Stop();
 }
 /**********************************************
 // IIC Write Data
 **********************************************/
-void SPI_WrDat(unsigned char IIC_Data)
+void I2C_WrDat(unsigned char IIC_Data)
 {
     IIC_Start();
-    Write_IIC_Byte(0x78);			//D/C#=0; R/W#=0
+    IIC_WriteByte(0x78);			//D/C#=0; R/W#=0
     IIC_Respons();
-    Write_IIC_Byte(0x40);			//write data
+    IIC_WriteByte(0x40);			//write data
     IIC_Respons();
-    Write_IIC_Byte(IIC_Data);
+    IIC_WriteByte(IIC_Data);
     IIC_Respons();
     IIC_Stop();
 }
-void OLED_WR_Byte(unsigned dat,unsigned cmd)
+void OLED_WrByte(unsigned dat,unsigned cmd)
 {
     if(cmd) {
-        SPI_WrDat(dat);
+        I2C_WrDat(dat);
     } else {
-        SPI_WrCmd(dat);
+        I2C_WrCmd(dat);
     }
 }
+#define OLED_CMD  0
+#define OLED_DATA 1
+#endif
 
-#else 
+#ifdef OLED_SPI
 void SPI_WrDat(unsigned char dat)
 {
   unsigned char i=8;
@@ -695,6 +698,28 @@ void SPI_WrCmd(unsigned char cmd)
 }
 #endif
 
+
+
+void OLED_WrCmd(unsigned char ucVal)
+{
+#if   defined(OLED_I2C)
+    I2C_WrCmd(ucVal);
+#elif defined(OLED_SPI)
+    SPI_WrCmd(ucVal);
+#else 
+    #error "NO OLED INTERFACE DEFINED"
+#endif
+}
+void OLED_WrDat(unsigned char ucVal)
+{
+#if   defined(OLED_I2C)
+     I2C_WrDat(ucVal);
+#elif defined(OLED_SPI)
+     SPI_WrDat(ucVal);
+#else 
+    #error "NO OLED INTERFACE DEFINED"
+#endif
+}
 /******************************************************************************
       函数说明：设置起始和结束地址
       入口数据：x1,x2 设置列的起始和结束地址
@@ -704,53 +729,53 @@ void SPI_WrCmd(unsigned char cmd)
 #ifdef OLED_COLOR
 void LCD_WrWord(uint16_t color)
 {
-    SPI_WrDat(color>>8);
-    SPI_WrDat(color);
+    OLED_WrDat(color>>8);
+    OLED_WrDat(color);
 }
 
 void OLED_Address_Set(uint16_t x1,uint16_t y1,uint16_t x2,uint16_t y2)
 {
 #if defined(CHIP_SSD1331)
-    SPI_WrCmd(0x15);//列地址设置
-    SPI_WrCmd(x1);
-    SPI_WrCmd(x2);
-    SPI_WrCmd(0x75);//行地址设置
-    SPI_WrCmd(y1);
-    SPI_WrCmd(y2);
+    OLED_WrCmd(0x15);//列地址设置
+    OLED_WrCmd(x1);
+    OLED_WrCmd(x2);
+    OLED_WrCmd(0x75);//行地址设置
+    OLED_WrCmd(y1);
+    OLED_WrCmd(y2);
 #elif  defined(CHIP_SSD1351)
-    SPI_WrCmd(0x15);//列地址设置
-    SPI_WrDat(x1);
-    SPI_WrDat(x2);
-    SPI_WrCmd(0x75);//行地址设置
-    SPI_WrDat(y1);
-    SPI_WrDat(y2);
-    SPI_WrCmd(0x5c);
+    OLED_WrCmd(0x15);//列地址设置
+    OLED_WrDat(x1);
+    OLED_WrDat(x2);
+    OLED_WrCmd(0x75);//行地址设置
+    OLED_WrDat(y1);
+    OLED_WrDat(y2);
+    OLED_WrCmd(0x5c);
 #elif defined(CHIP_ST7735)
-    SPI_WrCmd(0x2a);//列地址设置
+    OLED_WrCmd(0x2a);//列地址设置
     LCD_WrWord(y1+26);  
     LCD_WrWord(y2+26);
-    SPI_WrCmd(0x2b);//行地址设置
+    OLED_WrCmd(0x2b);//行地址设置
     LCD_WrWord(x1+1);
     LCD_WrWord(x2+1);
-    SPI_WrCmd(0x2c);//储存器写
+    OLED_WrCmd(0x2c);//储存器写
 #elif defined(CHIP_ST7789V2)
-    SPI_WrCmd(0x2a);//列地址设置
+    OLED_WrCmd(0x2a);//列地址设置
     LCD_WrWord(x1);  
     LCD_WrWord(x2);
-    SPI_WrCmd(0x2b);//行地址设置
+    OLED_WrCmd(0x2b);//行地址设置
     LCD_WrWord(y1+20);
     LCD_WrWord(y2+20);
-    SPI_WrCmd(0x2c);//储存器写
+    OLED_WrCmd(0x2c);//储存器写
 #elif defined(CHIP_SSD1322)                                             /* 基于目前的列行式字模 该IC仅支持竖屏显示 64x256  */
     y1  = y1 >> 2;                                                      /* 需要确保y1和(y2 + 1)可以被2整除                 */
     y2  = (((y2 + 1) >> 2) - 1);
-    SPI_WrCmd(0x15);
-    SPI_WrDat(0x1C + y1);
-    SPI_WrDat(0x1C + y2);
-    SPI_WrCmd(0x75);
-    SPI_WrDat(x1);
-    SPI_WrDat(x2);
-    SPI_WrCmd(0x5c);
+    OLED_WrCmd(0x15);
+    OLED_WrDat(0x1C + y1);
+    OLED_WrDat(0x1C + y2);
+    OLED_WrCmd(0x75);
+    OLED_WrDat(x1);
+    OLED_WrDat(x2);
+    OLED_WrCmd(0x5c);
 #endif
 }
 #else 
@@ -759,20 +784,20 @@ void OLED_Set_Pos(unsigned char x, unsigned char y)
     #ifdef CHIP_SH1106
     x += 2;
     #endif
-    SPI_WrCmd(0xb0+y);
-    SPI_WrCmd(x&0x0f);
-    SPI_WrCmd(((x&0xf0)>>4)|0x10);
+    OLED_WrCmd(0xb0+y);
+    OLED_WrCmd(x&0x0f);
+    OLED_WrCmd(((x&0xf0)>>4)|0x10);
 } 
 void OLED_PutPixel(uint8_t x,uint8_t y)
 {
-    SPI_WrCmd(0xb0+7-y/8);   //0xb0+0~7表示页0~页7?
+    OLED_WrCmd(0xb0+7-y/8);   //0xb0+0~7表示页0~页7?
     #ifdef CHIP_SH1106    //0x00+0~16表示将128列分成16组其地址在某组中的第几列
-    SPI_WrCmd(0x02 + x%16);
+    OLED_WrCmd(0x02 + x%16);
     #else 
-    SPI_WrCmd(0x00 + x%16);
+    OLED_WrCmd(0x00 + x%16);
     #endif  
-    SPI_WrCmd(0x10 + x/16);     //0x10+0~16表示将128列分成16组其地址所在第几组
-    SPI_WrDat(0x80>>(y%8));
+    OLED_WrCmd(0x10 + x/16);     //0x10+0~16表示将128列分成16组其地址所在第几组
+    OLED_WrDat(0x80>>(y%8));
 }
 
 #endif 
@@ -781,8 +806,8 @@ void OLED_PutPixel(uint8_t x,uint8_t y)
 void LCD_DrawPoint(uint8_t x, uint8_t y, uint16_t color)
 {
     OLED_Address_Set(x,y,x,y);
-    SPI_WrDat(color>>8);
-    SPI_WrDat(color);
+    OLED_WrDat(color>>8);
+    OLED_WrDat(color);
 }
 #endif
 
@@ -796,8 +821,8 @@ void OLED_Fill(unsigned int usData)
     {
         for (y=0; y < OLED_WIDTH; y++)
         {
-            SPI_WrDat(usData >> 8);
-            SPI_WrDat(usData);
+            OLED_WrDat(usData >> 8);
+            OLED_WrDat(usData);
         }
     }
 #elif defined(CHIP_SSD1322)
@@ -806,28 +831,28 @@ void OLED_Fill(unsigned int usData)
     {
         for (y=0; y < OLED_HIGH / 2; y++)
         {
-            SPI_WrDat(usData);
+            OLED_WrDat(usData);
         }
     }
 #else
 	for(y=0; y< (OLED_LINE_MAX + LINE_HEIGHT); y++)
 	{
-		SPI_WrCmd(0xb0+y);
-        #ifdef CHIP_SH1106
-        SPI_WrCmd(0x02);
+		OLED_WrCmd(0xb0+y);  //设置页地址（0~7）
+        #ifdef CHIP_SH1106   //设置显示位置—列低地址
+        OLED_WrCmd(0x02);
         #else 
-		SPI_WrCmd(0x00);
+		OLED_WrCmd(0x00);
         #endif
-		SPI_WrCmd(0x10);
+		OLED_WrCmd(0x10);    //设置显示位置—列高地址  
 		for(x=0;x<OLED_WIDTH;x++)
-			SPI_WrDat(usData);
+			OLED_WrDat(usData);
 	}
 #endif
 }
 
-
+//初始化
 void OLED_Init(void)        
-{  
+{
 #ifdef  STM32F10X_HD
     GPIO_InitTypeDef  GPIO_InitStructure;
 
@@ -847,133 +872,7 @@ void OLED_Init(void)
     GPIO_SetBits(GPIOB, GPIO_Pin_0 | GPIO_Pin_2 | GPIO_Pin_4 | GPIO_Pin_6 | GPIO_Pin_8);
 #endif
     
-#ifdef OLED_I2C
-    #define USE_HORIZONTAL 90
-    volatile uint8_t ucReadVal = 0;
-
-    /**
-     * Use a strategy (斯拽TeiG) to distingguish between SS1312 and SS1306
-     *       operation                 SS1312      SS1306
-     *    Read_IIC_Data(0xd3);    // 0x01(0x41)  0x03(0x43)
-     *    Read_IIC_Data(0xd5);    // 0x01(0x41)  0x03(0x43)
-     *    Read_IIC_Data(0xd9);    // 0x01(0x41)  0x03(0x43)
-     *    Read_IIC_Data(0xda);    // 0x01(0x41)  0x03(0x43)
-     *    Read_IIC_Data(0xdb);    // 0x01(0x41)  0x03(0x43)
-     *    Read_IIC_Data(0x8d);    // 0x01(0x41)  0x03(0x43)
-     */
-    ucReadVal = Read_IIC_Data(0xd3);
-    if ((ucReadVal & 0x03) == 0x03)  {
-
-        OLED_WR_Byte(0xAE,OLED_CMD);//关闭显示
-
-        OLED_WR_Byte(0x40,OLED_CMD);//---set low column address
-        OLED_WR_Byte(0xB0,OLED_CMD);//---set high column address
-
-        OLED_WR_Byte(0xC8,OLED_CMD);//-not offset
-
-        OLED_WR_Byte(0x81,OLED_CMD);//设置对比度
-        OLED_WR_Byte(0xff,OLED_CMD);
-
-        OLED_WR_Byte(0xa1,OLED_CMD);//段重定向设置
-
-        OLED_WR_Byte(0xa6,OLED_CMD);//
-
-        OLED_WR_Byte(0xa8,OLED_CMD);//设置驱动路数
-        OLED_WR_Byte(0x1f,OLED_CMD);
-
-        OLED_WR_Byte(0xd3,OLED_CMD);
-        OLED_WR_Byte(0x00,OLED_CMD);
-
-        OLED_WR_Byte(0xd5,OLED_CMD);
-        OLED_WR_Byte(0xf0,OLED_CMD);
-
-        OLED_WR_Byte(0xd9,OLED_CMD);
-        OLED_WR_Byte(0x22,OLED_CMD);
-
-        OLED_WR_Byte(0xda,OLED_CMD);
-        OLED_WR_Byte(0x02,OLED_CMD);
-
-        OLED_WR_Byte(0xdb,OLED_CMD);
-        OLED_WR_Byte(0x49,OLED_CMD);
-
-        OLED_WR_Byte(0x8d,OLED_CMD);
-        OLED_WR_Byte(0x14,OLED_CMD);
-
-        OLED_WR_Byte(0xaf,OLED_CMD);
-        OLED_Fill(0x00);
-    } else {
-        OLED_WR_Byte(0xAE,OLED_CMD);//--turn off oled panel
-
-        OLED_WR_Byte(0x00,OLED_CMD);    /*set lower column address*/
-        OLED_WR_Byte(0x10,OLED_CMD);    /*set higher column address*/
-
-        OLED_WR_Byte(0xB0,OLED_CMD);    /*set page address*/
-
-        OLED_WR_Byte(0x81,OLED_CMD);    /*contract control*/
-        OLED_WR_Byte(0x5f,OLED_CMD);    /*128*/
-
-        if(USE_HORIZONTAL==0)
-        {
-            OLED_WR_Byte(0x20,OLED_CMD);    /* Set Memory addressing mode (0x20/0x21) */
-            OLED_WR_Byte(0x09,OLED_CMD);     /* 0x09 */
-
-            OLED_WR_Byte(0xA1,OLED_CMD);    /*set segment remap  0XA1 */
-            OLED_WR_Byte(0xC8,OLED_CMD);    /*Com scan direction   0Xc8  */
-        }
-        else if(USE_HORIZONTAL==90)
-        {
-            OLED_WR_Byte(0x20,OLED_CMD);    /* Set Memory addressing mode (0x20/0x21) */
-            OLED_WR_Byte(0x02,OLED_CMD);     /* 0x02 */
-
-            OLED_WR_Byte(0xA1,OLED_CMD);    /*set segment remap  0XA1 */
-            OLED_WR_Byte(0xC0,OLED_CMD);    /*Com scan direction   0Xc0  */
-        }
-        else if(USE_HORIZONTAL==180)
-        {
-            OLED_WR_Byte(0x20,OLED_CMD);    /* Set Memory addressing mode (0x20/0x21) */
-            OLED_WR_Byte(0x09,OLED_CMD);     /* 0x09 */
-
-            OLED_WR_Byte(0xA0,OLED_CMD);    /*set segment remap  0XA0 */
-            OLED_WR_Byte(0xC0,OLED_CMD);    /*Com scan direction   0Xc0  */
-        }
-        else if(USE_HORIZONTAL==270)
-        {
-            OLED_WR_Byte(0x20,OLED_CMD);    /* Set Memory addressing mode (0x20/0x21) */
-            OLED_WR_Byte(0x02,OLED_CMD);     /* 0x02 */
-
-            OLED_WR_Byte(0xA0,OLED_CMD);    /*set segment remap  0XA0 */
-            OLED_WR_Byte(0xC8,OLED_CMD);    /*Com scan direction   0Xc8  */
-        }
-
-        OLED_WR_Byte(0xA4,OLED_CMD);    /*Disable Entire Display On (0xA4/0xA5)*/
-
-        OLED_WR_Byte(0xA6,OLED_CMD);    /*normal / reverse*/
-
-        OLED_WR_Byte(0xA8,OLED_CMD);    /*multiplex ratio*/
-        OLED_WR_Byte(0x3F,OLED_CMD);    /*duty = 1/64*/
-
-        OLED_WR_Byte(0xD3,OLED_CMD);    /*set display offset*/
-        OLED_WR_Byte(0x00,OLED_CMD);    /*   0x20   */
-
-        OLED_WR_Byte(0xD5,OLED_CMD);    /*set osc division*/
-        OLED_WR_Byte(0x80,OLED_CMD);
-
-        OLED_WR_Byte(0xD9,OLED_CMD);    /*set pre-charge period*/
-        OLED_WR_Byte(0x22,OLED_CMD);
-
-        OLED_WR_Byte(0xDA,OLED_CMD);    /* Set SEG Pins Hardware Configuration */
-        OLED_WR_Byte(0x10,OLED_CMD);
-
-        OLED_WR_Byte(0xdb,OLED_CMD);    /*set vcomh*/
-        OLED_WR_Byte(0x30,OLED_CMD);
-
-        OLED_WR_Byte(0x8d,OLED_CMD);    /*set charge pump enable*/
-        OLED_WR_Byte(0x72,OLED_CMD);    /* 0x12:7.5V; 0x52:8V;  0x72:9V;  0x92:10V */
-        OLED_Fill(0x00);
-        OLED_WR_Byte(0xAF,OLED_CMD);
-    }
-
-#else
+#ifdef OLED_SPI
     OLED_RST_0;   // 上电复位
     msDelay(10);
     OLED_RST_1;
@@ -981,196 +880,197 @@ void OLED_Init(void)
     OLED_SCL_0;   // 预置为底 为了加快速度
     OLED_CS_0;    // 总是选中 为了加快速度  
     OLED_DC_1;    // 默认数据 为了加快速度  6.35ms->5.38ms
+#endif
 #ifdef CHIP_SSD1331
     {
-    SPI_WrCmd(0xAE);
-    SPI_WrCmd(0xA0);
-    SPI_WrCmd(0x72);
-    SPI_WrCmd(0xA1);
-    SPI_WrCmd(0x00);
-    SPI_WrCmd(0xA2);
-    SPI_WrCmd(0x00);
-    SPI_WrCmd(0xA4);
-    SPI_WrCmd(0xA8);
-    SPI_WrCmd(0x3F);
-    SPI_WrCmd(0xAD);
-    SPI_WrCmd(0x8E);
-    SPI_WrCmd(0xB0);
-    SPI_WrCmd(0x0B);
-    SPI_WrCmd(0xB1);
-    SPI_WrCmd(0x31);
-    SPI_WrCmd(0xB3);
-    SPI_WrCmd(0xF0);
-    SPI_WrCmd(0x8A);
-    SPI_WrCmd(0x64);
-    SPI_WrCmd(0x8B);
-    SPI_WrCmd(0x78);
-    SPI_WrCmd(0x8C);
-    SPI_WrCmd(0x64);
-    SPI_WrCmd(0xBB);
-    SPI_WrCmd(0x3A);
-    SPI_WrCmd(0xBE);
-    SPI_WrCmd(0x3E);
-    SPI_WrCmd(0x87);
-    SPI_WrCmd(0x06);
-    SPI_WrCmd(0x81);
-    SPI_WrCmd(0x91);
-    SPI_WrCmd(0x82);
-    SPI_WrCmd(0x50);
-    SPI_WrCmd(0x83);
-    SPI_WrCmd(0x7D);
-    SPI_WrCmd(0xAF);
+    OLED_WrCmd(0xAE);
+    OLED_WrCmd(0xA0);
+    OLED_WrCmd(0x72);
+    OLED_WrCmd(0xA1);
+    OLED_WrCmd(0x00);
+    OLED_WrCmd(0xA2);
+    OLED_WrCmd(0x00);
+    OLED_WrCmd(0xA4);
+    OLED_WrCmd(0xA8);
+    OLED_WrCmd(0x3F);
+    OLED_WrCmd(0xAD);
+    OLED_WrCmd(0x8E);
+    OLED_WrCmd(0xB0);
+    OLED_WrCmd(0x0B);
+    OLED_WrCmd(0xB1);
+    OLED_WrCmd(0x31);
+    OLED_WrCmd(0xB3);
+    OLED_WrCmd(0xF0);
+    OLED_WrCmd(0x8A);
+    OLED_WrCmd(0x64);
+    OLED_WrCmd(0x8B);
+    OLED_WrCmd(0x78);
+    OLED_WrCmd(0x8C);
+    OLED_WrCmd(0x64);
+    OLED_WrCmd(0xBB);
+    OLED_WrCmd(0x3A);
+    OLED_WrCmd(0xBE);
+    OLED_WrCmd(0x3E);
+    OLED_WrCmd(0x87);
+    OLED_WrCmd(0x06);
+    OLED_WrCmd(0x81);
+    OLED_WrCmd(0x91);
+    OLED_WrCmd(0x82);
+    OLED_WrCmd(0x50);
+    OLED_WrCmd(0x83);
+    OLED_WrCmd(0x7D);
+    OLED_WrCmd(0xAF);
     OLED_Fill(0x00);}
 #elif defined(CHIP_SSD1351)
     {
-    SPI_WrCmd(0xFD); // set comand lockDriver IC interface is unlocked from entering command
-    SPI_WrDat(0x12); // Unlock Driver IC (0x12/0x16/0xB0/0xB1)  0x12 => Driver IC interface is unlocked from entering command.
-    SPI_WrCmd(0xFD);
-    SPI_WrDat(0xB1); // Unlock All Commands (0x12/0x16/0xB0/0xB1)
-    SPI_WrCmd(0xAE); // Display Off (Sleep Mode On)
-    SPI_WrCmd(0xB3);
-    SPI_WrDat(0xF1); // Set Clock as 90 Frames/Sec
-    SPI_WrCmd(0xCA);
-    SPI_WrDat(0x7F); // 1/128 Duty (0x0F~0x7F)
-    SPI_WrCmd(0xA2);
-    SPI_WrDat(0x00); // Shift Mapping RAM Counter (0x00~0x7F)
-    SPI_WrCmd(0xA1);
-    SPI_WrDat(0x00); // Set Mapping RAM Display Start Line (0x00~0x7F)
-    SPI_WrCmd(0xA0);
-    SPI_WrDat(0x75); // 0x74 Horizontal Address Increment mode ******************* 0x75 vertical address increment mode
-    SPI_WrCmd(0xB5);
-    SPI_WrDat(0x00); // Disable GPIO Pins Input
-    SPI_WrCmd(0xAB);
-    SPI_WrDat(0x01); // Enable Internal VDD Regulator
-    SPI_WrCmd(0xB4);
-    SPI_WrDat(0xA0); 
-    SPI_WrDat(0xB5);
-    SPI_WrDat(0x55); // Enable External VSL
-    SPI_WrCmd(0xC1);
-    SPI_WrDat(0xC8); // Set Contrast of Color A (Red)
-    SPI_WrDat(0x80); // Set Contrast of Color B (Green)
-    SPI_WrDat(0xC8); // Set Contrast of Color C (Blue)
-    SPI_WrCmd(0xC7); 
-    SPI_WrDat(0x0F); // Master Contrast Current Control  Default => 0x0F (Maximum)
+    OLED_WrCmd(0xFD); // set comand lockDriver IC interface is unlocked from entering command
+    OLED_WrDat(0x12); // Unlock Driver IC (0x12/0x16/0xB0/0xB1)  0x12 => Driver IC interface is unlocked from entering command.
+    OLED_WrCmd(0xFD);
+    OLED_WrDat(0xB1); // Unlock All Commands (0x12/0x16/0xB0/0xB1)
+    OLED_WrCmd(0xAE); // Display Off (Sleep Mode On)
+    OLED_WrCmd(0xB3);
+    OLED_WrDat(0xF1); // Set Clock as 90 Frames/Sec
+    OLED_WrCmd(0xCA);
+    OLED_WrDat(0x7F); // 1/128 Duty (0x0F~0x7F)
+    OLED_WrCmd(0xA2);
+    OLED_WrDat(0x00); // Shift Mapping RAM Counter (0x00~0x7F)
+    OLED_WrCmd(0xA1);
+    OLED_WrDat(0x00); // Set Mapping RAM Display Start Line (0x00~0x7F)
+    OLED_WrCmd(0xA0);
+    OLED_WrDat(0x75); // 0x74 Horizontal Address Increment mode ******************* 0x75 vertical address increment mode
+    OLED_WrCmd(0xB5);
+    OLED_WrDat(0x00); // Disable GPIO Pins Input
+    OLED_WrCmd(0xAB);
+    OLED_WrDat(0x01); // Enable Internal VDD Regulator
+    OLED_WrCmd(0xB4);
+    OLED_WrDat(0xA0); 
+    OLED_WrDat(0xB5);
+    OLED_WrDat(0x55); // Enable External VSL
+    OLED_WrCmd(0xC1);
+    OLED_WrDat(0xC8); // Set Contrast of Color A (Red)
+    OLED_WrDat(0x80); // Set Contrast of Color B (Green)
+    OLED_WrDat(0xC8); // Set Contrast of Color C (Blue)
+    OLED_WrCmd(0xC7); 
+    OLED_WrDat(0x0F); // Master Contrast Current Control  Default => 0x0F (Maximum)
     /* Set_Gray_Scale_Table() */
-    SPI_WrCmd(0xB1); 
-    SPI_WrDat(0x32); // Set Phase 1 as 5 Clocks & Phase 2 as 3 Clocks
-    SPI_WrCmd(0xBB);
-    SPI_WrDat(0x17); // Set Pre-Charge Voltage Level as 0.50*VCC
-    SPI_WrCmd(0xB2);
-    SPI_WrDat(0xA4); //  Enhance Display Performance
-    SPI_WrDat(0x00);
-    SPI_WrDat(0x00);
-    SPI_WrCmd(0xB6);
-    SPI_WrDat(0x01); // Set Second Pre-Charge Period as 1 Clock
-    SPI_WrCmd(0xBE);
-    SPI_WrDat(0x05); // Set Common Pins Deselect Voltage Level as 0.82*VCC
-    SPI_WrCmd(0xA6); // Normal Display
+    OLED_WrCmd(0xB1); 
+    OLED_WrDat(0x32); // Set Phase 1 as 5 Clocks & Phase 2 as 3 Clocks
+    OLED_WrCmd(0xBB);
+    OLED_WrDat(0x17); // Set Pre-Charge Voltage Level as 0.50*VCC
+    OLED_WrCmd(0xB2);
+    OLED_WrDat(0xA4); //  Enhance Display Performance
+    OLED_WrDat(0x00);
+    OLED_WrDat(0x00);
+    OLED_WrCmd(0xB6);
+    OLED_WrDat(0x01); // Set Second Pre-Charge Period as 1 Clock
+    OLED_WrCmd(0xBE);
+    OLED_WrDat(0x05); // Set Common Pins Deselect Voltage Level as 0.82*VCC
+    OLED_WrCmd(0xA6); // Normal Display
                     //     0xA4 (0x00) => Entire Display Off, All Pixels Turn Off
                     //     0xA5 (0x01) => Entire Display On, All Pixels Turn On at GS Level 63
                     //     0xA6 (0x02) => Normal Display
                     //     0xA7 (0x03) => Inverse Display
-    SPI_WrCmd(0xAF);
+    OLED_WrCmd(0xAF);
     OLED_Fill(0x00);}
 #elif defined(CHIP_ST7735)
     {
     LCD_BLK_1;//打开背光
-    SPI_WrCmd(0x11);     //Sleep out
+    OLED_WrCmd(0x11);     //Sleep out
     msDelay(120);                //Delay 120ms
-    SPI_WrCmd(0xB1);     //Normal mode
-    SPI_WrDat(0x05);   
-    SPI_WrDat(0x3C);   
-    SPI_WrDat(0x3C);   
-    SPI_WrCmd(0xB2);     //Idle mode
-    SPI_WrDat(0x05);   
-    SPI_WrDat(0x3C);   
-    SPI_WrDat(0x3C);   
-    SPI_WrCmd(0xB3);     //Partial mode
-    SPI_WrDat(0x05);   
-    SPI_WrDat(0x3C);   
-    SPI_WrDat(0x3C);   
-    SPI_WrDat(0x05);   
-    SPI_WrDat(0x3C);   
-    SPI_WrDat(0x3C);   
-    SPI_WrCmd(0xB4);     //Dot inversion
-    SPI_WrDat(0x03);   
-    SPI_WrCmd(0xC0);     //AVDD GVDD
-    SPI_WrDat(0xAB);   
-    SPI_WrDat(0x0B);   
-    SPI_WrDat(0x04);   
-    SPI_WrCmd(0xC1);     //VGH VGL
-    SPI_WrDat(0xC5);   //C0
-    SPI_WrCmd(0xC2);     //Normal Mode
-    SPI_WrDat(0x0D);   
-    SPI_WrDat(0x00);   
-    SPI_WrCmd(0xC3);     //Idle
-    SPI_WrDat(0x8D);   
-    SPI_WrDat(0x6A);   
-    SPI_WrCmd(0xC4);     //Partial+Full
-    SPI_WrDat(0x8D);   
-    SPI_WrDat(0xEE);   
-    SPI_WrCmd(0xC5);     //VCOM
-    SPI_WrDat(0x0F);   
-    SPI_WrCmd(0xE0);     //positive gamma
-    SPI_WrDat(0x07);   
-    SPI_WrDat(0x0E);   
-    SPI_WrDat(0x08);   
-    SPI_WrDat(0x07);   
-    SPI_WrDat(0x10);   
-    SPI_WrDat(0x07);   
-    SPI_WrDat(0x02);   
-    SPI_WrDat(0x07);   
-    SPI_WrDat(0x09);   
-    SPI_WrDat(0x0F);   
-    SPI_WrDat(0x25);   
-    SPI_WrDat(0x36);   
-    SPI_WrDat(0x00);   
-    SPI_WrDat(0x08);   
-    SPI_WrDat(0x04);   
-    SPI_WrDat(0x10);   
-    SPI_WrCmd(0xE1);     //negative gamma
-    SPI_WrDat(0x0A);   
-    SPI_WrDat(0x0D);   
-    SPI_WrDat(0x08);   
-    SPI_WrDat(0x07);   
-    SPI_WrDat(0x0F);   
-    SPI_WrDat(0x07);   
-    SPI_WrDat(0x02);   
-    SPI_WrDat(0x07);   
-    SPI_WrDat(0x09);   
-    SPI_WrDat(0x0F);   
-    SPI_WrDat(0x25);   
-    SPI_WrDat(0x35);   
-    SPI_WrDat(0x00);   
-    SPI_WrDat(0x09);   
-    SPI_WrDat(0x04);   
-    SPI_WrDat(0x10);
+    OLED_WrCmd(0xB1);     //Normal mode
+    OLED_WrDat(0x05);   
+    OLED_WrDat(0x3C);   
+    OLED_WrDat(0x3C);   
+    OLED_WrCmd(0xB2);     //Idle mode
+    OLED_WrDat(0x05);   
+    OLED_WrDat(0x3C);   
+    OLED_WrDat(0x3C);   
+    OLED_WrCmd(0xB3);     //Partial mode
+    OLED_WrDat(0x05);   
+    OLED_WrDat(0x3C);   
+    OLED_WrDat(0x3C);   
+    OLED_WrDat(0x05);   
+    OLED_WrDat(0x3C);   
+    OLED_WrDat(0x3C);   
+    OLED_WrCmd(0xB4);     //Dot inversion
+    OLED_WrDat(0x03);   
+    OLED_WrCmd(0xC0);     //AVDD GVDD
+    OLED_WrDat(0xAB);   
+    OLED_WrDat(0x0B);   
+    OLED_WrDat(0x04);   
+    OLED_WrCmd(0xC1);     //VGH VGL
+    OLED_WrDat(0xC5);   //C0
+    OLED_WrCmd(0xC2);     //Normal Mode
+    OLED_WrDat(0x0D);   
+    OLED_WrDat(0x00);   
+    OLED_WrCmd(0xC3);     //Idle
+    OLED_WrDat(0x8D);   
+    OLED_WrDat(0x6A);   
+    OLED_WrCmd(0xC4);     //Partial+Full
+    OLED_WrDat(0x8D);   
+    OLED_WrDat(0xEE);   
+    OLED_WrCmd(0xC5);     //VCOM
+    OLED_WrDat(0x0F);   
+    OLED_WrCmd(0xE0);     //positive gamma
+    OLED_WrDat(0x07);   
+    OLED_WrDat(0x0E);   
+    OLED_WrDat(0x08);   
+    OLED_WrDat(0x07);   
+    OLED_WrDat(0x10);   
+    OLED_WrDat(0x07);   
+    OLED_WrDat(0x02);   
+    OLED_WrDat(0x07);   
+    OLED_WrDat(0x09);   
+    OLED_WrDat(0x0F);   
+    OLED_WrDat(0x25);   
+    OLED_WrDat(0x36);   
+    OLED_WrDat(0x00);   
+    OLED_WrDat(0x08);   
+    OLED_WrDat(0x04);   
+    OLED_WrDat(0x10);   
+    OLED_WrCmd(0xE1);     //negative gamma
+    OLED_WrDat(0x0A);   
+    OLED_WrDat(0x0D);   
+    OLED_WrDat(0x08);   
+    OLED_WrDat(0x07);   
+    OLED_WrDat(0x0F);   
+    OLED_WrDat(0x07);   
+    OLED_WrDat(0x02);   
+    OLED_WrDat(0x07);   
+    OLED_WrDat(0x09);   
+    OLED_WrDat(0x0F);   
+    OLED_WrDat(0x25);   
+    OLED_WrDat(0x35);   
+    OLED_WrDat(0x00);   
+    OLED_WrDat(0x09);   
+    OLED_WrDat(0x04);   
+    OLED_WrDat(0x10);
          
-    SPI_WrCmd(0xFC);    
-    SPI_WrDat(0x80);  
+    OLED_WrCmd(0xFC);    
+    OLED_WrDat(0x80);  
         
-    SPI_WrCmd(0x3A);     
-    SPI_WrDat(0x55);   
-    SPI_WrCmd(0x36);
+    OLED_WrCmd(0x3A);     
+    OLED_WrDat(0x55);   
+    OLED_WrCmd(0x36);
     /* 
-     * SPI_WrDat(0x08); Vertical
-     * SPI_WrDat(0xC8); Vertical
-     * SPI_WrDat(0x78); Landscope 正置
-       SPI_WrDat(0xA8); Landscope 倒置*/
-    SPI_WrDat(0x88);     //Landscope   0x48 正置 0x88 倒置
-    SPI_WrCmd(0x21);     //Display inversion
-    SPI_WrCmd(0x29);     //Display on
-//    SPI_WrCmd(0x2A);     //Set Column Address
-//    SPI_WrDat(0x00);   
-//    SPI_WrDat(0x1A);     //26  
-//    SPI_WrDat(0x00);   
-//    SPI_WrDat(0x69);     //105 
-//    SPI_WrCmd(0x2B);     //Set Page Address
-//    SPI_WrDat(0x00);   
-//    SPI_WrDat(0x01);    //1
-//    SPI_WrDat(0x00);   
-//    SPI_WrDat(0xA0);    //160
-//    SPI_WrCmd(0x2C);
+     * OLED_WrDat(0x08); Vertical
+     * OLED_WrDat(0xC8); Vertical
+     * OLED_WrDat(0x78); Landscope 正置
+       OLED_WrDat(0xA8); Landscope 倒置*/
+    OLED_WrDat(0x88);     //Landscope   0x48 正置 0x88 倒置
+    OLED_WrCmd(0x21);     //Display inversion
+    OLED_WrCmd(0x29);     //Display on
+//    OLED_WrCmd(0x2A);     //Set Column Address
+//    OLED_WrDat(0x00);   
+//    OLED_WrDat(0x1A);     //26  
+//    OLED_WrDat(0x00);   
+//    OLED_WrDat(0x69);     //105 
+//    OLED_WrCmd(0x2B);     //Set Page Address
+//    OLED_WrDat(0x00);   
+//    OLED_WrDat(0x01);    //1
+//    OLED_WrDat(0x00);   
+//    OLED_WrDat(0xA0);    //160
+//    OLED_WrCmd(0x2C);
     }
 #elif defined(CHIP_ST7789V2)
     {
@@ -1178,103 +1078,103 @@ void OLED_Init(void)
   msDelay(10);
 	
 	//************* Start Initial Sequence **********//
-	SPI_WrCmd(0x11); //Sleep out 
+	OLED_WrCmd(0x11); //Sleep out 
 	msDelay(120);              //Delay 120ms 
 	//************* Start Initial Sequence **********// 
-	SPI_WrCmd(0x36);
-	SPI_WrDat(0x00);
+	OLED_WrCmd(0x36);
+	OLED_WrDat(0x00);
 
 
-	SPI_WrCmd(0x3A);			
-	SPI_WrDat(0x05);
+	OLED_WrCmd(0x3A);			
+	OLED_WrDat(0x05);
 
-	SPI_WrCmd(0xB2);			
-	SPI_WrDat(0x0C);
-	SPI_WrDat(0x0C); 
-	SPI_WrDat(0x00); 
-	SPI_WrDat(0x33); 
-	SPI_WrDat(0x33); 			
+	OLED_WrCmd(0xB2);			
+	OLED_WrDat(0x0C);
+	OLED_WrDat(0x0C); 
+	OLED_WrDat(0x00); 
+	OLED_WrDat(0x33); 
+	OLED_WrDat(0x33); 			
 
-	SPI_WrCmd(0xB7);			
-	SPI_WrDat(0x35);
+	OLED_WrCmd(0xB7);			
+	OLED_WrDat(0x35);
 
-	SPI_WrCmd(0xBB);			
-	SPI_WrDat(0x32); //Vcom=1.35V
+	OLED_WrCmd(0xBB);			
+	OLED_WrDat(0x32); //Vcom=1.35V
 					
-	SPI_WrCmd(0xC2);
-	SPI_WrDat(0x01);
+	OLED_WrCmd(0xC2);
+	OLED_WrDat(0x01);
 
-	SPI_WrCmd(0xC3);			
-	SPI_WrDat(0x15); //GVDD=4.8V  颜色深度
+	OLED_WrCmd(0xC3);			
+	OLED_WrDat(0x15); //GVDD=4.8V  颜色深度
 				
-	SPI_WrCmd(0xC4);			
-	SPI_WrDat(0x20); //VDV, 0x20:0v
+	OLED_WrCmd(0xC4);			
+	OLED_WrDat(0x20); //VDV, 0x20:0v
 
-	SPI_WrCmd(0xC6);			
-	SPI_WrDat(0x0F); //0x0F:60Hz        	
+	OLED_WrCmd(0xC6);			
+	OLED_WrDat(0x0F); //0x0F:60Hz        	
 
-	SPI_WrCmd(0xD0);			
-	SPI_WrDat(0xA4);
-	SPI_WrDat(0xA1); 
+	OLED_WrCmd(0xD0);			
+	OLED_WrDat(0xA4);
+	OLED_WrDat(0xA1); 
 
-	SPI_WrCmd(0xE0);
-	SPI_WrDat(0xD0);   
-	SPI_WrDat(0x08);   
-	SPI_WrDat(0x0E);   
-	SPI_WrDat(0x09);   
-	SPI_WrDat(0x09);   
-	SPI_WrDat(0x05);   
-	SPI_WrDat(0x31);   
-	SPI_WrDat(0x33);   
-	SPI_WrDat(0x48);   
-	SPI_WrDat(0x17);   
-	SPI_WrDat(0x14);   
-	SPI_WrDat(0x15);   
-	SPI_WrDat(0x31);   
-	SPI_WrDat(0x34);   
+	OLED_WrCmd(0xE0);
+	OLED_WrDat(0xD0);   
+	OLED_WrDat(0x08);   
+	OLED_WrDat(0x0E);   
+	OLED_WrDat(0x09);   
+	OLED_WrDat(0x09);   
+	OLED_WrDat(0x05);   
+	OLED_WrDat(0x31);   
+	OLED_WrDat(0x33);   
+	OLED_WrDat(0x48);   
+	OLED_WrDat(0x17);   
+	OLED_WrDat(0x14);   
+	OLED_WrDat(0x15);   
+	OLED_WrDat(0x31);   
+	OLED_WrDat(0x34);   
 
-	SPI_WrCmd(0xE1);     
-	SPI_WrDat(0xD0);   
-	SPI_WrDat(0x08);   
-	SPI_WrDat(0x0E);   
-	SPI_WrDat(0x09);   
-	SPI_WrDat(0x09);   
-	SPI_WrDat(0x15);   
-	SPI_WrDat(0x31);   
-	SPI_WrDat(0x33);   
-	SPI_WrDat(0x48);   
-	SPI_WrDat(0x17);   
-	SPI_WrDat(0x14);   
-	SPI_WrDat(0x15);   
-	SPI_WrDat(0x31);   
-	SPI_WrDat(0x34);
-	SPI_WrCmd(0x21); 
+	OLED_WrCmd(0xE1);     
+	OLED_WrDat(0xD0);   
+	OLED_WrDat(0x08);   
+	OLED_WrDat(0x0E);   
+	OLED_WrDat(0x09);   
+	OLED_WrDat(0x09);   
+	OLED_WrDat(0x15);   
+	OLED_WrDat(0x31);   
+	OLED_WrDat(0x33);   
+	OLED_WrDat(0x48);   
+	OLED_WrDat(0x17);   
+	OLED_WrDat(0x14);   
+	OLED_WrDat(0x15);   
+	OLED_WrDat(0x31);   
+	OLED_WrDat(0x34);
+	OLED_WrCmd(0x21); 
 
-	SPI_WrCmd(0x29);
+	OLED_WrCmd(0x29);
     }
 #elif defined(CHIP_SSD1322)
     {
-    SPI_WrCmd(0xfd);  /*Command Lock*/ 
-    SPI_WrDat(0x12);
+    OLED_WrCmd(0xfd);  /*Command Lock*/ 
+    OLED_WrDat(0x12);
 
-    SPI_WrCmd(0xae); //Sleep In 
+    OLED_WrCmd(0xae); //Sleep In 
 
-    SPI_WrCmd(0xb3);	//Set Display Clock Divide Ratio/Oscillator Frequency 
-    SPI_WrDat(0x91);
+    OLED_WrCmd(0xb3);	//Set Display Clock Divide Ratio/Oscillator Frequency 
+    OLED_WrDat(0x91);
 
-    SPI_WrCmd(0xca);	//Set Multiplex Ratio 
-    SPI_WrDat(0x3f);
+    OLED_WrCmd(0xca);	//Set Multiplex Ratio 
+    OLED_WrDat(0x3f);
 
-    SPI_WrCmd(0xa2);	//Set Display Offset 
-    SPI_WrDat(0x00);	//
+    OLED_WrCmd(0xa2);	//Set Display Offset 
+    OLED_WrDat(0x00);	//
 
-    SPI_WrCmd(0xa1);	//Set Display Start Line 
-    SPI_WrDat(0x00);	//
+    OLED_WrCmd(0xa1);	//Set Display Start Line 
+    OLED_WrDat(0x00);	//
 
-    SPI_WrCmd(0xa0);	//Set Re-Map $ Dual COM Line Mode
+    OLED_WrCmd(0xa0);	//Set Re-Map $ Dual COM Line Mode
     if(0)
     {
-    SPI_WrDat(0x14);  // 0x14 = 0b00010100, A2 = 1(enable Nibble Re-map) A4 = 1(scan from COM[N-1] to COM[0], where N is the Multiplex ratio) A[5] = 0
+    OLED_WrDat(0x14);  // 0x14 = 0b00010100, A2 = 1(enable Nibble Re-map) A4 = 1(scan from COM[N-1] to COM[0], where N is the Multiplex ratio) A[5] = 0
     }
     else
     {
@@ -1282,105 +1182,181 @@ void OLED_Init(void)
      * 0 0 A5 A4 0 A2 A1 A0  // A0 Horizaontal or vertial  A2 = 1(enable Nibble RE-map) 
      * 0 0  0 0  0  1  0  1  // A4 COM0~COM[N-1] 反序   A1 = 1(Enable Column Address Re-map)
      */
-    SPI_WrDat(0x12);         // 0x12 正置竖屏  0x10 倒置竖屏
+    OLED_WrDat(0x12);         // 0x12 正置竖屏  0x10 倒置竖屏
     }
 
-    SPI_WrCmd(0xB5);	//Set GPIO 
-    SPI_WrDat(0x00);
+    OLED_WrCmd(0xB5);	//Set GPIO 
+    OLED_WrDat(0x00);
 
-    SPI_WrCmd(0xab);	//Function Selection
-    SPI_WrDat(0x01);	//
+    OLED_WrCmd(0xab);	//Function Selection
+    OLED_WrDat(0x01);	//
 
-    SPI_WrCmd(0xb4);	//Enable External VSL 
-    SPI_WrDat(0xa0);	//
-    SPI_WrDat(0xfd);	//
+    OLED_WrCmd(0xb4);	//Enable External VSL 
+    OLED_WrDat(0xa0);	//
+    OLED_WrDat(0xfd);	//
 
-    SPI_WrCmd(0xc1);	//Set Contrast Current
-    SPI_WrDat(0xff);	
+    OLED_WrCmd(0xc1);	//Set Contrast Current
+    OLED_WrDat(0xff);	
 
-    SPI_WrCmd(0xc7);	//Master Contrast Current Control
-    SPI_WrDat(0x0f);	//
+    OLED_WrCmd(0xc7);	//Master Contrast Current Control
+    OLED_WrDat(0x0f);	//
 
-    SPI_WrCmd(0xb9);	//Select Default Linear Gray Scale Table 
+    OLED_WrCmd(0xb9);	//Select Default Linear Gray Scale Table 
 
-    SPI_WrCmd(0xb1);	//Set Phase Length
-    SPI_WrDat(0xe2);	
+    OLED_WrCmd(0xb1);	//Set Phase Length
+    OLED_WrDat(0xe2);	
 
-    SPI_WrCmd(0xd1);	//Enhance Driving Scheme Capability 
-    SPI_WrDat(0x82);	
-    SPI_WrDat(0x20);	
+    OLED_WrCmd(0xd1);	//Enhance Driving Scheme Capability 
+    OLED_WrDat(0x82);	
+    OLED_WrDat(0x20);	
 
-    SPI_WrCmd(0xbb);	//Set Pre-Charge Voltage 
-    SPI_WrDat(0x1f);	
+    OLED_WrCmd(0xbb);	//Set Pre-Charge Voltage 
+    OLED_WrDat(0x1f);	
 
-    SPI_WrCmd(0xb6);	//Set Second Pre-Charge Period 
-    SPI_WrDat(0x08);	
+    OLED_WrCmd(0xb6);	//Set Second Pre-Charge Period 
+    OLED_WrDat(0x08);	
 
-    SPI_WrCmd(0xbe);	//Set VCOMH Deselect Level 
-    SPI_WrDat(0x07);		
+    OLED_WrCmd(0xbe);	//Set VCOMH Deselect Level 
+    OLED_WrDat(0x07);		
 
-    SPI_WrCmd(0xa6);	//Set Display Mode
+    OLED_WrCmd(0xa6);	//Set Display Mode
     OLED_Fill(0x00);   //Clear Screen
-    SPI_WrCmd(0xaf);	//Sleep Out        
+    OLED_WrCmd(0xaf);	//Sleep Out        
     
+    }
+#elif defined(CHIP_SSD1312)
+    {
+    #define USE_HORIZONTAL 90
+    OLED_WrByte(0xAE,OLED_CMD);//--turn off oled panel
+
+    OLED_WrByte(0x00,OLED_CMD);    /*set lower column address*/
+    OLED_WrByte(0x10,OLED_CMD);    /*set higher column address*/
+
+    OLED_WrByte(0xB0,OLED_CMD);    /*set page address*/
+
+    OLED_WrByte(0x81,OLED_CMD);    /*contract control*/
+    OLED_WrByte(0x5f,OLED_CMD);    /*128*/
+
+    if(USE_HORIZONTAL==0)
+    {
+        OLED_WrByte(0x20,OLED_CMD);    /* Set Memory addressing mode (0x20/0x21) */
+        OLED_WrByte(0x09,OLED_CMD);     /* 0x09 */
+
+        OLED_WrByte(0xA1,OLED_CMD);    /*set segment remap  0XA1 */
+        OLED_WrByte(0xC8,OLED_CMD);    /*Com scan direction   0Xc8  */
+    }
+    else if(USE_HORIZONTAL==90)
+    {
+        OLED_WrByte(0x20,OLED_CMD);    /* Set Memory addressing mode (0x20/0x21) */
+        OLED_WrByte(0x02,OLED_CMD);     /* 0x02 */
+
+        OLED_WrByte(0xA1,OLED_CMD);    /*set segment remap  0XA1 */
+        OLED_WrByte(0xC0,OLED_CMD);    /*Com scan direction   0Xc0  */
+    }
+    else if(USE_HORIZONTAL==180)
+    {
+    OLED_WrByte(0x20,OLED_CMD);    /* Set Memory addressing mode (0x20/0x21) */
+    OLED_WrByte(0x09,OLED_CMD);     /* 0x09 */
+
+    OLED_WrByte(0xA0,OLED_CMD);    /*set segment remap  0XA0 */
+    OLED_WrByte(0xC0,OLED_CMD);    /*Com scan direction   0Xc0  */
+    }
+    else if(USE_HORIZONTAL==270)
+    {
+    OLED_WrByte(0x20,OLED_CMD);    /* Set Memory addressing mode (0x20/0x21) */
+    OLED_WrByte(0x02,OLED_CMD);     /* 0x02 */
+
+    OLED_WrByte(0xA0,OLED_CMD);    /*set segment remap  0XA0 */
+    OLED_WrByte(0xC8,OLED_CMD);    /*Com scan direction   0Xc8  */
+    }
+
+    OLED_WrByte(0xA4,OLED_CMD);    /*Disable Entire Display On (0xA4/0xA5)*/
+
+    OLED_WrByte(0xA6,OLED_CMD);    /*normal / reverse*/
+
+    OLED_WrByte(0xA8,OLED_CMD);    /*multiplex ratio*/
+    OLED_WrByte(0x3F,OLED_CMD);    /*duty = 1/64*/
+
+    OLED_WrByte(0xD3,OLED_CMD);    /*set display offset*/
+    OLED_WrByte(0x00,OLED_CMD);    /*   0x20   */
+
+    OLED_WrByte(0xD5,OLED_CMD);    /*set osc division*/
+    OLED_WrByte(0x80,OLED_CMD);
+
+    OLED_WrByte(0xD9,OLED_CMD);    /*set pre-charge period*/
+    OLED_WrByte(0x22,OLED_CMD);
+
+    OLED_WrByte(0xDA,OLED_CMD);    /* Set SEG Pins Hardware Configuration */
+    OLED_WrByte(0x10,OLED_CMD);
+
+    OLED_WrByte(0xdb,OLED_CMD);    /*set vcomh*/
+    OLED_WrByte(0x30,OLED_CMD);
+
+    OLED_WrByte(0x8d,OLED_CMD);    /*set charge pump enable*/
+    OLED_WrByte(0x72,OLED_CMD);    /* 0x12:7.5V; 0x52:8V;  0x72:9V;  0x92:10V */
+    OLED_Fill(0x00);
+    OLED_WrByte(0xAF,OLED_CMD);
     }
 #else 
     {//从上电到下面开始初始化要有足够的时间，即等待RC复位完毕   
-    SPI_WrCmd(0xFD);// 待验证新增  SSD1306pass
-    SPI_WrCmd(0x12);// 待验证新增  SSD1306pass
-    SPI_WrCmd(0xae);//--turn off oled panel
-    SPI_WrCmd(0xd5);//--set display clock divide ratio/oscillator frequency
-    SPI_WrCmd(0xA0);// 待验证新增
+    OLED_WrCmd(0xFD);// 待验证新增  SSD1306pass
+    OLED_WrCmd(0x12);// 待验证新增  SSD1306pass
+    OLED_WrCmd(0xae);//--turn off oled panel
+    OLED_WrCmd(0xd5);//--set display clock divide ratio/oscillator frequency
+    OLED_WrCmd(0xA0);// 待验证新增  SSD1306pass
    
-    SPI_WrCmd(0xa8);//--set multiplex ratio(1 to 64)
-    SPI_WrCmd(0x3f);//--1/64 duty
-    SPI_WrCmd(0xd3);//-set display offset    Shift Mapping RAM Counter (0x00~0x3F)
-    SPI_WrCmd(0x00);//-not offset    
-    SPI_WrCmd(0x40);//--set start line address  Set Mapping RAM Display Start Line (0x00~0x3F)
+    OLED_WrCmd(0xa8);//--set multiplex ratio(1 to 64)
+    OLED_WrCmd(0x3f);//--1/64 duty  12864: 0x3f  12832: 0x1f
+    OLED_WrCmd(0xd3);//-set display offset    Shift Mapping RAM Counter (0x00~0x3F)
+    OLED_WrCmd(0x00);//-not offset    
+    OLED_WrCmd(0x40);//--set start line address  Set Mapping RAM Display Start Line (0x00~0x3F)
 
-//    SPI_WrCmd(0xa6);//--set normal display  待验证可删 SSD1306pass 
+//    OLED_WrCmd(0xa6);//--set normal display  待验证可删 SSD1306pass 
 
-    SPI_WrCmd(Landscope);//--Set SEG/Column Mapping     0xa0左右反置 0xa1正常
-    SPI_WrCmd(Verticall);//Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
-    SPI_WrCmd(0xda);//--set com pins hardware configuration
-    SPI_WrCmd(0x12);
-    SPI_WrCmd(0x81);//--set contrast control register
-    SPI_WrCmd(Brightness); // Set SEG Output Current Brightness
-   
+    OLED_WrCmd(0xa0);//--Set SEG/Column Mapping     0xa0左右反置 0xa1正常
+    OLED_WrCmd(0xc0);//Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
+        
+    OLED_WrCmd(0x81);//--set contrast control register
+    OLED_WrCmd(Brightness); // Set SEG Output Current Brightness
+    
+    OLED_WrCmd(0xda);//--set com pins hardware configuration
+    OLED_WrCmd(0x12);//--12864: 0x12  12832: 0x02
 #ifdef CHIP_SSD1306   
-    SPI_WrCmd(0x80);//--set divide ratio, Set Clock as 100 Frames/Sec
-    SPI_WrCmd(0xd9);//--set pre-charge period
-    SPI_WrCmd(0xf1);//Set Pre-Charge as 15 Clocks & Discharge as 1 Clock
-    SPI_WrCmd(0xdb);//--set vcomh
-    SPI_WrCmd(0x40);//Set VCOM Deselect Level
-    SPI_WrCmd(0x8d);//--set Charge Pump enable/disable
-    SPI_WrCmd(0x14);//--set(0x10) disable
+    OLED_WrCmd(0x80);//--set divide ratio, Set Clock as 100 Frames/Sec
+    
+    OLED_WrCmd(0xd9);//--set pre-charge period
+    OLED_WrCmd(0xf1);//Set Pre-Charge as 15 Clocks & Discharge as 1 Clock
+    
+    OLED_WrCmd(0xdb);//--set vcomh
+    OLED_WrCmd(0x40);//Set VCOM Deselect Level
+    
+    OLED_WrCmd(0x8d);//--set Charge Pump enable/disable
+    OLED_WrCmd(0x14);//--set(0x10) disable
 #elif defined(CHIP_SSD1309)
-    SPI_WrCmd(0xD9);//--set pre-charge period
-    SPI_WrCmd(0x82);//Set Pre-Charge as 15 Clocks & Discharge as 1 Clock
-    SPI_WrCmd(0xDB);//--set vcomh
-    SPI_WrCmd(0x34);//Set VCOM Deselect Level
+    OLED_WrCmd(0xD9);//--set pre-charge period
+    OLED_WrCmd(0x82);//Set Pre-Charge as 15 Clocks & Discharge as 1 Clock
+    OLED_WrCmd(0xDB);//--set vcomh
+    OLED_WrCmd(0x34);//Set VCOM Deselect Level
 #elif defined(CHIP_SH1106)
-    SPI_WrCmd(0xad);
-    SPI_WrCmd(0x8b);
-    SPI_WrCmd(0x33);
-    SPI_WrCmd(0x8d);//--set Charge Pump enable/disable
-    SPI_WrCmd(0x14);//--set(0x10) disable
+    OLED_WrCmd(0xad);
+    OLED_WrCmd(0x8b);
+    OLED_WrCmd(0x33);
+    OLED_WrCmd(0x8d);//--set Charge Pump enable/disable
+    OLED_WrCmd(0x14);//--set(0x10) disable
 #else 
     #error "NO OLED CHIP SELECTED"
 #endif
-    //SPI_WrCmd(0x20);//-Set Page Addressing Mode (0x00/0x01/0x02)
-    //SPI_WrCmd(0x02);//
-    SPI_WrCmd(0xa4);// Disable Entire Display On (0xa4/0xa5) //验证新增  SSD1306pass
-    SPI_WrCmd(0xa6);// Disable Inverse Display On (0xa6/a7)  //验证新增  SSD1306pass
+    //OLED_WrCmd(0x20);//-Set Page Addressing Mode (0x00/0x01/0x02)
+    //OLED_WrCmd(0x02);//
+    OLED_WrCmd(0xa4);// Disable Entire Display On (0xa4/0xa5) //验证新增  SSD1306pass
+    OLED_WrCmd(0xa6);// Disable Inverse Display On (0xa6/a7)  //验证新增  SSD1306pass
     OLED_Fill(0x00);  //初始清屏
-    SPI_WrCmd(0xaf);//--turn on oled panel
+    OLED_WrCmd(0xaf);//--turn on oled panel
     OLED_Set_Pos(0,0);}
 #endif   /* NOT SSD1331 */  
-#endif  /*  NOT OLED_I2C */
 }
 
-/* m^n */  
+///* m^n */  
 uint32_t mypow(uint8_t m,uint8_t n)
 {
     uint32_t result=1;	 
@@ -1478,9 +1454,9 @@ void OLED_PutChar(uint8_t x,uint8_t y,uint8_t wan, uint8_t ucSize, uint16_t ucYn
         {
     #ifndef CHIP_SSD1322
             if (ulTemp & 0x01) {
-                SPI_WrDat(ucYn>>8); SPI_WrDat(ucYn);//LCD_WrWord(ucYn);
+                OLED_WrDat(ucYn>>8); OLED_WrDat(ucYn);//LCD_WrWord(ucYn);
             } else {
-                SPI_WrDat(BACK_COLOR>>8); SPI_WrDat(BACK_COLOR);//LCD_WrWord(BACK_COLOR);
+                OLED_WrDat(BACK_COLOR>>8); OLED_WrDat(BACK_COLOR);//LCD_WrWord(BACK_COLOR);
             }
             ulTemp >>= 1;
     #else
@@ -1494,8 +1470,8 @@ void OLED_PutChar(uint8_t x,uint8_t y,uint8_t wan, uint8_t ucSize, uint16_t ucYn
                 }
                 ulTemp >>= 1; 
             }
-            SPI_WrDat(ucYn >> 8); 
-            SPI_WrDat(ucYn);
+            OLED_WrDat(ucYn >> 8); 
+            OLED_WrDat(ucYn);
      #endif
         }
     }
@@ -1525,7 +1501,7 @@ void OLED_PutChar(uint8_t x,uint8_t y,uint8_t wan, uint8_t ucSize, uint16_t ucYn
             } else {
                 return;
             }
-            ucYn ? SPI_WrDat(ucTemp) : SPI_WrDat(~ucTemp);
+            ucYn ? OLED_WrDat(ucTemp) : OLED_WrDat(~ucTemp);
         }
     }
 #endif
@@ -1925,9 +1901,9 @@ void OLED_PutHan(uint8_t x,uint8_t y,uint8_t ch[], uint16_t ucYn)
             {
         #ifndef CHIP_SSD1322
                 if (usTemp & 0x01) {
-                    SPI_WrDat(ucYn>>8); SPI_WrDat(ucYn);//LCD_WrWord(ucYn);
+                    OLED_WrDat(ucYn>>8); OLED_WrDat(ucYn);//LCD_WrWord(ucYn);
                 } else {
-                    SPI_WrDat(BACK_COLOR>>8); SPI_WrDat(BACK_COLOR);//LCD_WrWord(BACK_COLOR);
+                    OLED_WrDat(BACK_COLOR>>8); OLED_WrDat(BACK_COLOR);//LCD_WrWord(BACK_COLOR);
                 }
                 usTemp >>= 1;
         #else 
@@ -1941,8 +1917,8 @@ void OLED_PutHan(uint8_t x,uint8_t y,uint8_t ch[], uint16_t ucYn)
                     }
                     usTemp >>= 1; 
                 }
-                SPI_WrDat(ucYn >> 8); 
-                SPI_WrDat(ucYn);
+                OLED_WrDat(ucYn >> 8); 
+                OLED_WrDat(ucYn);
         #endif
             }
         }
@@ -1950,12 +1926,12 @@ void OLED_PutHan(uint8_t x,uint8_t y,uint8_t ch[], uint16_t ucYn)
         OLED_Set_Pos(x , y);
         for(wm = 0;wm < 14;wm++)
         {
-            ucYn ? SPI_WrDat(F14x16[adder++]) : SPI_WrDat(~F14x16[adder++]);
+            ucYn ? OLED_WrDat(F14x16[adder++]) : OLED_WrDat(~F14x16[adder++]);
         }      
         OLED_Set_Pos(x,y + 1); 
         for(wm = 0;wm < 14;wm++)          
         {
-            ucYn ? SPI_WrDat(F14x16[adder++]) : SPI_WrDat(~F14x16[adder++]);
+            ucYn ? OLED_WrDat(F14x16[adder++]) : OLED_WrDat(~F14x16[adder++]);
         }
 
 #endif
@@ -2051,32 +2027,32 @@ void OLED_Print(uint8_t x,uint8_t y,uint8_t ch[], uint16_t ucYn)
 //  {
 //    OLED_Set_Pos(x,y);                  //write "wan"
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[wan*64+i]);
+//      OLED_WrDat(F16X32[wan*64+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[wan*64+i+16]); 
+//      OLED_WrDat(F16X32[wan*64+i+16]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[wan*64+i+32]); 
+//      OLED_WrDat(F16X32[wan*64+i+32]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[wan*64+i+48]); 
+//      OLED_WrDat(F16X32[wan*64+i+48]); 
 //    x+=16;
 //  }
 //  if(qian!=0 || wan != 0)
 //  {
 //    OLED_Set_Pos(x,y);                  //write "qian"
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[qian*64+i]);
+//      OLED_WrDat(F16X32[qian*64+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[qian*64+i+16]); 
+//      OLED_WrDat(F16X32[qian*64+i+16]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[qian*64+i+32]); 
+//      OLED_WrDat(F16X32[qian*64+i+32]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[qian*64+i+48]); 
+//      OLED_WrDat(F16X32[qian*64+i+48]); 
 //    x+=16;
 //  }
 //  
@@ -2084,57 +2060,57 @@ void OLED_Print(uint8_t x,uint8_t y,uint8_t ch[], uint16_t ucYn)
 //  {
 //     OLED_Set_Pos(x,y);                  //write "bai"
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[bai*64+i]);
+//      OLED_WrDat(F16X32[bai*64+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[bai*64+i+16]); 
+//      OLED_WrDat(F16X32[bai*64+i+16]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[bai*64+i+32]); 
+//      OLED_WrDat(F16X32[bai*64+i+32]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[bai*64+i+48]); 
+//      OLED_WrDat(F16X32[bai*64+i+48]); 
 //    x+=16;
 //  }
 //  OLED_Set_Pos(x,y);                  //write "shi"
 //  for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[shi*64+i]);
+//    OLED_WrDat(F16X32[shi*64+i]);
 //  OLED_Set_Pos(x,y+1);
 //  for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[shi*64+i+16]); 
+//    OLED_WrDat(F16X32[shi*64+i+16]); 
 //  OLED_Set_Pos(x,y+2);
 //  for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[shi*64+i+32]); 
+//    OLED_WrDat(F16X32[shi*64+i+32]); 
 //  OLED_Set_Pos(x,y+3);
 //  for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[shi*64+i+48]); 
+//    OLED_WrDat(F16X32[shi*64+i+48]); 
 //  x+=16;
 //  
 //  OLED_Set_Pos(x,y);                  //write "dot"
 //  for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[18*64+i]);
+//    OLED_WrDat(F16X32[18*64+i]);
 //  OLED_Set_Pos(x,y+1);
 //  for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[18*64+i+16]); 
+//    OLED_WrDat(F16X32[18*64+i+16]); 
 //  OLED_Set_Pos(x,y+2);
 //  for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[18*64+i+32]); 
+//    OLED_WrDat(F16X32[18*64+i+32]); 
 //  OLED_Set_Pos(x,y+3);
 //  for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[18*64+i+48]); 
+//    OLED_WrDat(F16X32[18*64+i+48]); 
 //  x+=16;
 //  OLED_Set_Pos(x,y);                  //write "ge"
 //  for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge*64+i]);
+//    OLED_WrDat(F16X32[ge*64+i]);
 //  OLED_Set_Pos(x,y+1);
 //  for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge*64+i+16]); 
+//    OLED_WrDat(F16X32[ge*64+i+16]); 
 //  OLED_Set_Pos(x,y+2);
 //  for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge*64+i+32]); 
+//    OLED_WrDat(F16X32[ge*64+i+32]); 
 //  OLED_Set_Pos(x,y+3);
 //  for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge*64+i+48]); 
+//    OLED_WrDat(F16X32[ge*64+i+48]); 
 //  x+=16;
 //  switch(unit)
 //  {
@@ -2143,75 +2119,75 @@ void OLED_Print(uint8_t x,uint8_t y,uint8_t ch[], uint16_t ucYn)
 //  case 1 :
 //    OLED_Set_Pos(x,y);                  //write 'C
 //    for(i=0;i<32;i++)
-//      SPI_WrDat(F16X32[10*64+i]);
+//      OLED_WrDat(F16X32[10*64+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<32;i++)
-//      SPI_WrDat(F16X32[10*64+i+32]); 
+//      OLED_WrDat(F16X32[10*64+i+32]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<32;i++)
-//      SPI_WrDat(F16X32[10*64+i+64]); 
+//      OLED_WrDat(F16X32[10*64+i+64]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<32;i++)
-//      SPI_WrDat(F16X32[10*64+i+96]); 
+//      OLED_WrDat(F16X32[10*64+i+96]); 
 //    x+=32;//x+=16; 
 //    break;
 //  case 2 :
 //    OLED_Set_Pos(x,y);                  //write V
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[12*64+i]);
+//      OLED_WrDat(F16X32[12*64+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[12*64+i+16]); 
+//      OLED_WrDat(F16X32[12*64+i+16]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[12*64+i+32]); 
+//      OLED_WrDat(F16X32[12*64+i+32]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[12*64+i+48]); 
+//      OLED_WrDat(F16X32[12*64+i+48]); 
 //    x+=16;
 //    break;
 //  case 3 :
 //    OLED_Set_Pos(x,y);                  //write A
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[14*64+i]);
+//      OLED_WrDat(F16X32[14*64+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[14*64+i+16]); 
+//      OLED_WrDat(F16X32[14*64+i+16]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[14*64+i+32]); 
+//      OLED_WrDat(F16X32[14*64+i+32]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[14*64+i+48]); 
+//      OLED_WrDat(F16X32[14*64+i+48]); 
 //    x+=16;
 //    break;
 //  case 4 :
 //    OLED_Set_Pos(x,y);                  //write cm
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[16*64+i]);
+//      OLED_WrDat(F16X32[16*64+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[16*64+i+16]); 
+//      OLED_WrDat(F16X32[16*64+i+16]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[16*64+i+32]); 
+//      OLED_WrDat(F16X32[16*64+i+32]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[16*64+i+48]);
+//      OLED_WrDat(F16X32[16*64+i+48]);
 //    x+=16;
 //    
 //    OLED_Set_Pos(x,y);                 
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[16*64+i+64]);
+//      OLED_WrDat(F16X32[16*64+i+64]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[16*64+i+80]); 
+//      OLED_WrDat(F16X32[16*64+i+80]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[16*64+i+96]); 
+//      OLED_WrDat(F16X32[16*64+i+96]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(F16X32[16*64+i+112]); 
+//      OLED_WrDat(F16X32[16*64+i+112]); 
 //    x+=16;
 //    
 //    break;
@@ -2221,16 +2197,16 @@ void OLED_Print(uint8_t x,uint8_t y,uint8_t ch[], uint16_t ucYn)
 //  {
 //    OLED_Set_Pos(x,y);                 
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(0x00);
+//      OLED_WrDat(0x00);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(0x00); 
+//      OLED_WrDat(0x00); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(0x00); 
+//      OLED_WrDat(0x00); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//      SPI_WrDat(0x00); 
+//      OLED_WrDat(0x00); 
 //    x+=16;
 //  }
 //}
@@ -2249,136 +2225,136 @@ void OLED_Print(uint8_t x,uint8_t y,uint8_t ch[], uint16_t ucYn)
 //    ge = (ptTime->hour / 10)*64;
 //    OLED_Set_Pos(x,y);                 
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i]);
+//    OLED_WrDat(F16X32[ge+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+16]); 
+//    OLED_WrDat(F16X32[ge+i+16]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+32]); 
+//    OLED_WrDat(F16X32[ge+i+32]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+48]); 
+//    OLED_WrDat(F16X32[ge+i+48]); 
 //    x+=16;
 
 //    ge = (ptTime->hour % 10)*64;
 //    OLED_Set_Pos(x,y);                 
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i]);
+//    OLED_WrDat(F16X32[ge+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+16]); 
+//    OLED_WrDat(F16X32[ge+i+16]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+32]); 
+//    OLED_WrDat(F16X32[ge+i+32]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+48]); 
+//    OLED_WrDat(F16X32[ge+i+48]); 
 //    x+=16;
 //    
 //    OLED_Set_Pos(x,y);                  //write "dot"
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[20*64+i]);
+//    OLED_WrDat(F16X32[20*64+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[20*64+i+16]); 
+//    OLED_WrDat(F16X32[20*64+i+16]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[20*64+i+32]); 
+//    OLED_WrDat(F16X32[20*64+i+32]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[20*64+i+48]); 
+//    OLED_WrDat(F16X32[20*64+i+48]); 
 //    x+=16;
 //    
 //    ge = (ptTime->minute / 10)*64;
 //    OLED_Set_Pos(x,y);                 
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i]);
+//    OLED_WrDat(F16X32[ge+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+16]); 
+//    OLED_WrDat(F16X32[ge+i+16]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+32]); 
+//    OLED_WrDat(F16X32[ge+i+32]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+48]); 
+//    OLED_WrDat(F16X32[ge+i+48]); 
 //    x+=16;
 
 //    ge = (ptTime->minute % 10)*64;
 //    OLED_Set_Pos(x,y);                 
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i]);
+//    OLED_WrDat(F16X32[ge+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+16]); 
+//    OLED_WrDat(F16X32[ge+i+16]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+32]); 
+//    OLED_WrDat(F16X32[ge+i+32]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+48]); 
+//    OLED_WrDat(F16X32[ge+i+48]); 
 //    x+=16;
 //    
 //    
 //    OLED_Set_Pos(x,y);                  //write "dot"
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[20*64+i]);
+//    OLED_WrDat(F16X32[20*64+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[20*64+i+16]); 
+//    OLED_WrDat(F16X32[20*64+i+16]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[20*64+i+32]); 
+//    OLED_WrDat(F16X32[20*64+i+32]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[20*64+i+48]); 
+//    OLED_WrDat(F16X32[20*64+i+48]); 
 //    x+=16;
 //    
 //    ge = (ptTime->second / 10)*64;
 //    OLED_Set_Pos(x,y);                 
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i]);
+//    OLED_WrDat(F16X32[ge+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+16]); 
+//    OLED_WrDat(F16X32[ge+i+16]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+32]); 
+//    OLED_WrDat(F16X32[ge+i+32]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+48]); 
+//    OLED_WrDat(F16X32[ge+i+48]); 
 //    x+=16;
 
 //    ge = (ptTime->second % 10)*64;
 //    OLED_Set_Pos(x,y);                 
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i]);
+//    OLED_WrDat(F16X32[ge+i]);
 //    OLED_Set_Pos(x,y+1);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+16]); 
+//    OLED_WrDat(F16X32[ge+i+16]); 
 //    OLED_Set_Pos(x,y+2);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+32]); 
+//    OLED_WrDat(F16X32[ge+i+32]); 
 //    OLED_Set_Pos(x,y+3);
 //    for(i=0;i<16;i++)
-//    SPI_WrDat(F16X32[ge+i+48]); 
+//    OLED_WrDat(F16X32[ge+i+48]); 
 //    x+=16;
 //     
 //    while(x<112)  // 空余位清零 
 //    {
 //        OLED_Set_Pos(x,y);                 
 //        for(i=0;i<16;i++)
-//        SPI_WrDat(0x00);
+//        OLED_WrDat(0x00);
 //        OLED_Set_Pos(x,y+1);
 //        for(i=0;i<16;i++)
-//        SPI_WrDat(0x00); 
+//        OLED_WrDat(0x00); 
 //        OLED_Set_Pos(x,y+2);
 //        for(i=0;i<16;i++)
-//        SPI_WrDat(0x00); 
+//        OLED_WrDat(0x00); 
 //        OLED_Set_Pos(x,y+3);
 //        for(i=0;i<16;i++)
-//        SPI_WrDat(0x00); 
+//        OLED_WrDat(0x00); 
 //        x+=16;
 //    }
 //}
@@ -2422,7 +2398,7 @@ void OLED_DrawBMP(uint8_t x0,uint8_t y0,uint8_t x1,uint8_t y1)
         OLED_Set_Pos(x0,y);				
         for(x=x0;x<x1;x++)
         {      
-            SPI_WrDat(Scale1_8x128[ii++]);	    	
+            OLED_WrDat(Scale1_8x128[ii++]);	    	
         }
     }
 //	for(i=0;i<128;i++)
