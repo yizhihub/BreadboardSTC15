@@ -198,8 +198,8 @@ typedef struct yizhi_RTC_Time_s
     #define OLED_SCL         PBout(6)
     #define OLED_SDA         PBout(7)
     #define OLED_SDA_R       PBin(7)
-    #define OLED_SDA_IN      ;
-    #define OLED_SDA_OUT     ;
+    #define OLED_SDA_IN      {GPIOB->CRL &= 0X0FFFFFFF; GPIOB->CRL |= 8 << 28;}
+    #define OLED_SDA_OUT     {GPIOB->CRL &= 0X0FFFFFFF; GPIOB->CRL |= 3 << 28;}
     #define OLED_SCL_0   OLED_SCL = 0 //GPIOA->BRR  = 1 << 13
     #define OLED_SCL_1   OLED_SCL = 1 //GPIOA->BSRR = 1 << 13
     #define OLED_SDA_0   OLED_SDA = 0 //GPIOA->BRR  = 1 << 14

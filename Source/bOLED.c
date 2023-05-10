@@ -484,19 +484,29 @@ void IIC_Stop()
 
 void IIC_Respons()
 {
+    uint8_t ucTimeOut = 0;
     /**
      * 1. The follow either OLED_SDIN_Set or usDelayOne(a longer delay),which is indispensable
      * 2. a usDelayOne() is enough for SS1306, but SS1312 need two usDealyOne() for stable.
-     */
+     */ 
+    OLED_SDA_IN;                                                        /* master handover sda's control  */
     OLED_SDA_1;
     usDelayOne();
     usDelayOne();
-
     OLED_SCL_1;
-    /*
-     *  it task me 1.5 hour to figureout here can not be place a usDelayOne(), but why ?
+    
+    /**
+     *  it takes me 1.5 hour to figureout here can not be place a usDelayOne(), but why ?  2022.05~06
+     *  it takes me 0.5 day  to figureout here must place a usDelayOne(), but why ?        2023.05.09
+     *  increase while(OLED_SDA_R && (ucTimeOut < 10u)) to judge the reponse signal        2023.05.10
      */
-    OLED_SCL_0;                                                 /* there might be a delay */
+    while(OLED_SDA_R && (ucTimeOut < 10u)) {
+        ucTimeOut++;
+        usDelayOne(); 
+    }
+    OLED_SCL_0;                                                         /* after this, slave release sda */
+    OLED_SDA_OUT;                                                       /* maseter recontrol sda         */
+    usDelayOne();                                                       /* there might be a delay */
 }
 
 
