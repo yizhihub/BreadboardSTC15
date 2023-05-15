@@ -28,14 +28,14 @@
 #endif
 
 /*
- * slection among CHIP_SSD1306,CHIP_SH1106,CHIP_SSD1309, CHIP_SSD1312(i2c), CHIP_SSD1322, CHIP_SSD1331,CHIP_SSD1351, CHIP_ST7735, 
- * CHIP_ST7789V2,。 
+ * slection among CHIP_SSD1306,CHIP_SH1106,CHIP_SSD1309, CHIP_SSD1312(i2c), CHIP_SSD1322, CHIP_SSD1327, CHIP_SSD1331,CHIP_SSD1351
+ * CHIP_ST7735, CHIP_ST7789V2,。 
  * 注释： SSD1309是 2.42寸大屏，分辨率12864
  *        SSD1322和SSD1327是灰度，前者是64x256,后者是128x128。
  *        SSD1331和SSD1351是彩屏，前者是96x64，后者是128x128。
  */
 
-#if  defined(CHIP_SSD1331) || defined(CHIP_SSD1351) || defined(CHIP_ST7735) || defined(CHIP_SSD1322) || defined(CHIP_ST7789V2)
+#if  defined(CHIP_SSD1331) || defined(CHIP_SSD1351) || defined(CHIP_SSD1322) || defined(CHIP_SSD1327) || defined(CHIP_ST7735) || defined(CHIP_ST7789V2)
 #define OLED_COLOR
 #endif
 
@@ -58,7 +58,7 @@
     #define OLED_WIDTH 96
     #define LINE_HEIGHT 16
     #define OLED_LINE_MAX  3*LINE_HEIGHT
-#elif defined(CHIP_SSD1351)
+#elif defined(CHIP_SSD1351) || defined(CHIP_SSD1327)
     #undef OLED_HIGH
     #undef LINE_HEIGHT
     #define OLED_HIGH   128
@@ -115,7 +115,7 @@
  */
 #define FEATURE_F6x8
 #define FEATURE_F8x16
-//#define FEATURE_F16x32
+#define FEATURE_F16x32
 #define FEATURE_HANZI
 //#define FEATURE_BMP
 

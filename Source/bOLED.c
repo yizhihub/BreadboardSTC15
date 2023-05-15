@@ -742,7 +742,16 @@ void LCD_WrWord(uint16_t color)
     OLED_WrDat(color>>8);
     OLED_WrDat(color);
 }
-
+/**
+*********************************************************************************************************
+** @nameis OLED_Address_Set
+** @effect 设置耍写窗口
+** @import x1 起始列 y1 起始行 x2 终止列 y2 终止行  例如 0, 0, 15, 31 设置一个 水平宽16竖直高为32的显示窗口
+** @export none
+** @return none
+** @create yizhi 2023.03.27
+** @modify yizhi 2023.05.15 正式明确输入参数的含义，注意如果改变了屏幕的显示方向，赋值寄存器需要对应修改 
+*********************************************************************************************************/
 void OLED_Address_Set(uint16_t x1,uint16_t y1,uint16_t x2,uint16_t y2)
 {
 #if defined(CHIP_SSD1331)
@@ -786,6 +795,15 @@ void OLED_Address_Set(uint16_t x1,uint16_t y1,uint16_t x2,uint16_t y2)
     OLED_WrDat(x1);
     OLED_WrDat(x2);
     OLED_WrCmd(0x5c);
+#elif defined(CHIP_SSD1327)
+    x1  = x1 >> 1;                                                      /* 需要确保x1和(x2 + 1)可以被2整除                 */
+    x2  = (((x2 + 1) >> 1) - 1);
+    OLED_WrCmd(0x15);
+    OLED_WrCmd(x1);
+    OLED_WrCmd(x2);
+    OLED_WrCmd(0x75);
+    OLED_WrCmd(y1);
+    OLED_WrCmd(y2);
 #endif
 }
 #else 
@@ -835,13 +853,13 @@ void OLED_Fill(unsigned int usData)
             OLED_WrDat(usData);
         }
     }
-#elif defined(CHIP_SSD1322)
+#elif defined(CHIP_SSD1322) || defined(CHIP_SSD1327)
     OLED_Address_Set(0,0,OLED_WIDTH - 1,OLED_HIGH - 1);
-    for(x=0; x < OLED_WIDTH; x++)
+    for(x=0; x < (OLED_WIDTH >> 1); x++)                                /* 每次外循环写2竖列， 需要循环64次    */ 
     {
-        for (y=0; y < OLED_HIGH / 2; y++)
+        for (y=0; y < OLED_HIGH; y++)                                   /* 写这两竖列需要循环128次             */
         {
-            OLED_WrDat(usData);
+            OLED_WrDat(usData);                                         /* 高四位为第一个点灰度，低四位为第二个*/
         }
     }
 #else
@@ -1234,6 +1252,39 @@ void OLED_Init(void)
     OLED_WrCmd(0xaf);	//Sleep Out        
     
     }
+#elif defined(CHIP_SSD1327)
+    {
+    OLED_WrCmd(0xae);//Set display off
+    OLED_WrCmd(0xa0);//Set re-map
+    OLED_WrCmd(0x55); // 0x66: 倒置
+    OLED_WrCmd(0xa1);//Set display start line
+    OLED_WrCmd(0x00);
+    OLED_WrCmd(0xa2);//Set display offset
+    OLED_WrCmd(0x00);
+    OLED_WrCmd(0xa4);//Normal Display
+    OLED_WrCmd(0xa8);//Set multiplex ratio
+    OLED_WrCmd(0x7f);
+    OLED_WrCmd(0xab);//Function Selection A
+    OLED_WrCmd(0x01);//Enable internal VDD regulator
+    OLED_WrCmd(0x81);//Set contrast
+    OLED_WrCmd(0x77);
+    OLED_WrCmd(0xb1);//Set Phase Length
+    OLED_WrCmd(0x31);
+    OLED_WrCmd(0xb3);//Set Front Clock Divider /Oscillator Frequency
+    OLED_WrCmd(0xb1);
+    OLED_WrCmd(0xb5);//
+    OLED_WrCmd(0x03);//0X03 enable
+    OLED_WrCmd(0xb6);//Set Second pre-charge Period
+    OLED_WrCmd(0x0d);
+    OLED_WrCmd(0xbc);//Set Pre-charge voltage
+    OLED_WrCmd(0x07);
+    OLED_WrCmd(0xbe);//Set VCOMH
+    OLED_WrCmd(0x07);
+    OLED_WrCmd(0xd5);//Function Selection B
+    OLED_WrCmd(0x02);//Enable second pre-charge
+    OLED_Fill(0x00); //OLED_Clear(0,0,128,128,0x00);
+    OLED_WrCmd(0xaf);//Display on  
+    }
 #elif defined(CHIP_SSD1312)
     {
     #define USE_HORIZONTAL 90
@@ -1387,7 +1438,7 @@ void OLED_PutChar(uint8_t x,uint8_t y,uint8_t wan, uint8_t ucSize, uint16_t ucYn
 {   
 #if defined(OLED_COLOR)
     uint8_t pos,t,ucHeight;
-    u32 ulTemp;
+    u32 ulTemp[2];
 #else
     uint8_t i, j, ucTemp;
 #endif
@@ -1437,24 +1488,38 @@ void OLED_PutChar(uint8_t x,uint8_t y,uint8_t wan, uint8_t ucSize, uint16_t ucYn
     {
         if (ucSize == 6) {
      #ifdef FEATURE_F6x8
-            ulTemp = F6x8[wan][pos];                                    /* 调用0608字体  */ 
+            ulTemp[0] = F6x8[wan][pos];                                    /* 调用0608字体  */ 
+            #ifdef CHIP_SSD1327
+            pos++;
+            ulTemp[1] = F6x8[wan][pos];                                    /* 调用0608字体  */ 
+            #endif
      #else   
-            ulTemp = 0xCC;
+            ulTemp[0] = 0xCC;                                             /* 显示斑马纹 */
      #endif 
             ucHeight = 8;                                               /* ucHeight represent character Height */
         } else if (ucSize == 8) {
     #ifdef  FEATURE_F8x16
-            ulTemp = (F8X16[wan][pos + 8] << 8) | F8X16[wan][pos]; /* 调用1608字体 */
+            ulTemp[0] = (F8X16[wan][pos + 8] << 8) | F8X16[wan][pos]; /* 调用1608字体 */
+            #ifdef CHIP_SSD1327
+            pos++;
+            ulTemp[1] = (F8X16[wan][pos + 8] << 8) | F8X16[wan][pos]; /* 调用1608字体 */
+            #endif
     #else 
-            ulTemp = 0xCCCC;                                            /* 显示斑马纹 */
+            ulTemp[0] = 0xCCCC;                                            /* 显示斑马纹 */
     #endif
             ucHeight = 16;                                              /* ucHeight represent character Height */
         } else if (ucSize == 16) {
     #ifdef  FEATURE_F16x32
-            ulTemp = (F16X32[wan][pos + 48] << 24) | (F16X32[wan][pos + 32] << 16) |
-                     (F16X32[wan][pos + 16] << 8 ) | (F16X32[wan][pos]);/* 调用3216字体           */
+            ulTemp[0] = (F16X32[wan][pos + 48] << 24) | (F16X32[wan][pos + 32] << 16) |
+                        (F16X32[wan][pos + 16] << 8 ) | (F16X32[wan][pos]);/* 调用3216字体           */
+            #ifdef CHIP_SSD1327
+            pos++;
+            ulTemp[1] = (F16X32[wan][pos + 48] << 24) | (F16X32[wan][pos + 32] << 16) |
+                        (F16X32[wan][pos + 16] << 8 ) | (F16X32[wan][pos]);/* 调用3216字体           */
+            #endif
+            
     #else 
-            ulTemp = 0xCCCCCCCC;                                        /* 显示斑马纹 */
+            ulTemp[0] = 0xCCCCCCCC;                                        /* 显示斑马纹 */
     #endif
             ucHeight = 32;                                              /* ucHeight represent character Height */
         } else {
@@ -1462,26 +1527,35 @@ void OLED_PutChar(uint8_t x,uint8_t y,uint8_t wan, uint8_t ucSize, uint16_t ucYn
         }
         for (t = 0; t < ucHeight; t++)
         {
-    #ifndef CHIP_SSD1322
-            if (ulTemp & 0x01) {
+    #if defined(CHIP_SSD1331) || defined(CHIP_SSD1351) ||defined(CHIP_ST7735) || defined(CHIP_ST7789V2)
+            if (ulTemp[0] & 0x01) {
                 OLED_WrDat(ucYn>>8); OLED_WrDat(ucYn);//LCD_WrWord(ucYn);
             } else {
                 OLED_WrDat(BACK_COLOR>>8); OLED_WrDat(BACK_COLOR);//LCD_WrWord(BACK_COLOR);
             }
-            ulTemp >>= 1;
-    #else
+            ulTemp[0] >>= 1;
+    #elif defined(CHIP_SSD1322)
             t += 3;
             ucYn = 0;
             for (x = 0; x < 4; x++) {
                 
                 ucYn >>= 4;
-                if (ulTemp & 0x01) {
+                if (ulTemp[0] & 0x01) {
                     ucYn |= 0xA000;                                     /* 0x8000　高四位控制显示亮度　        */
                 }
-                ulTemp >>= 1; 
+                ulTemp[0] >>= 1; 
             }
             OLED_WrDat(ucYn >> 8); 
             OLED_WrDat(ucYn);
+     #elif defined(CHIP_SSD1327)
+            ucYn = 0x00;                                                   
+            if (ulTemp[0] & 0x01)  ucYn  = 0xF0;
+            if (ulTemp[1] & 0x01)  ucYn |= 0x0F;
+            ulTemp[0] >>= 1;
+            ulTemp[1] >>= 1;
+            OLED_WrDat(ucYn);
+     #else
+            #error "NO CHIP DEFINED!"
      #endif
         }
     }
@@ -1516,12 +1590,16 @@ void OLED_PutChar(uint8_t x,uint8_t y,uint8_t wan, uint8_t ucSize, uint16_t ucYn
     }
 #endif
 }
-//==m============================================================
-//函数名：OLED_P8x16Str(uint8_t x,uint8_t y,uint8_t *p)
-//功能描述：写入一组标准ASCII字符串
-//参数：显示的位置（x,y），y为页范围0～7，要显示的字符串
-//返回：无   yn=1  正常显示  yn=0 反黑显示 
-//==============================================================  
+/**
+*********************************************************************************************************
+** @nameis OLED_PutStr
+** @effect 写入一组标准ASCII字符串
+** @import x 显示的列坐标 y 显示的行坐标 ch[] 显示字符串 ucSize 字体大小 ucYn 字体颜色(单色OLED屏幕0为反显，1为正常显示)
+** @export none
+** @return none
+** @create yizhi 2023.03.19
+** @modify  
+*********************************************************************************************************/
 void OLED_PutStr(uint8_t x,uint8_t y,uint8_t ch[], uint8_t ucSize, uint16_t ucYn)
 {
     uint8_t j=0, wan;
@@ -1871,7 +1949,7 @@ void OLED_PutHan(uint8_t x,uint8_t y,uint8_t ch[], uint16_t ucYn)
     uint16_t adder=0; 
     #ifdef OLED_COLOR
         uint8_t i;
-        uint16_t usTemp;
+        uint16_t usTemp[2];
     #endif
 
     while(ch[ii] != '\0') //挨个输出每个汉字
@@ -1906,29 +1984,42 @@ void OLED_PutHan(uint8_t x,uint8_t y,uint8_t ch[], uint16_t ucYn)
         OLED_Address_Set(x, y, x + 14 - 1, y + (16) - 1);
         for(wm = 0;wm < 14;wm++)                       /* 每个汉字需要扫描14列 */
         {
-            usTemp = (F14x16[adder + wm + 14] << 8) | F14x16[adder + wm];  /* 得到要扫描的第N列数据 每列数据包含16个点 */
+            usTemp[0] = (F14x16[adder + wm + 14] << 8) | F14x16[adder + wm];  /* 得到要扫描的第N列数据 每列数据包含16个点 */
+            #ifdef CHIP_SSD1327
+            wm++;
+            usTemp[1] = (F14x16[adder + wm + 14] << 8) | F14x16[adder + wm];  /* 得到要扫描的第N列数据 每列数据包含16个点 */
+            #endif
             for (i = 0; i < 16; i++)
             {
-        #ifndef CHIP_SSD1322
-                if (usTemp & 0x01) {
+        #if defined(CHIP_SSD1331) || defined(CHIP_SSD1351) ||defined(CHIP_ST7735) || defined(CHIP_ST7789V2)
+                if (usTemp[0] & 0x01) {
                     OLED_WrDat(ucYn>>8); OLED_WrDat(ucYn);//LCD_WrWord(ucYn);
                 } else {
                     OLED_WrDat(BACK_COLOR>>8); OLED_WrDat(BACK_COLOR);//LCD_WrWord(BACK_COLOR);
                 }
                 usTemp >>= 1;
-        #else 
+        #elif defined(CHIP_SSD1322)
                 i += 3;
                 ucYn = 0;
                 for (x = 0; x < 4; x++) {
                     
                     ucYn >>= 4;
-                    if (usTemp & 0x01) {
+                    if (usTemp[0] & 0x01) {
                         ucYn |= 0x8000;                                     /* 0x8000　高四位控制显示亮度　        */
                     }
-                    usTemp >>= 1; 
+                    usTemp[0] >>= 1; 
                 }
                 OLED_WrDat(ucYn >> 8); 
                 OLED_WrDat(ucYn);
+        #elif defined(CHIP_SSD1327)
+                ucYn = 0x00;                                                   
+                if (usTemp[0] & 0x01)  ucYn  = 0xF0;
+                if (usTemp[1] & 0x01)  ucYn |= 0x0F;
+                usTemp[0] >>= 1;
+                usTemp[1] >>= 1;
+                OLED_WrDat(ucYn);
+        #else
+            #error "NO CHIP DEFINED !"
         #endif
             }
         }
