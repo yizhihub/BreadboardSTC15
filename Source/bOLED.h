@@ -115,7 +115,7 @@
  */
 #define FEATURE_F6x8
 #define FEATURE_F8x16
-#define FEATURE_F16x32
+//#define FEATURE_F16x32
 #define FEATURE_HANZI
 //#define FEATURE_BMP
 
@@ -145,16 +145,23 @@ typedef struct yizhi_RTC_Time_s
     sbit OLED_DC = P1^1;
     sbit OLED_CS = P1^2;
     sbit LCD_BLK = P1^3;
-    #define LCD_BLK_0    LCD_BLK = 0
-    #define LCD_BLK_1    LCD_BLK = 1
     #elif defined(STC15W408ASDIP16)
     sbit OLED_SCL= P5^4;                                                    /* 15W408AS  DIP16 Left ÕýÖÃ */
     sbit OLED_SDA= P1^5;
     sbit OLED_RST= P1^4;
     sbit OLED_DC = P1^3;
     sbit OLED_CS = P1^2;
+	#elif defined(IAP15W413ASSOP20)
+	sbit OLED_SCL= P1^2;                                                    /* 15W408AS  SOP20 Left ÕýÖÃ */
+    sbit OLED_SDA= P1^3;
+    sbit OLED_RST= P1^4;
+    sbit OLED_DC = P1^5;
+    sbit OLED_CS = P1^6;
+	sbit LCD_BLK = P1^7;
     #endif
     
+	#define LCD_BLK_0    LCD_BLK = 0
+    #define LCD_BLK_1    LCD_BLK = 1
     #define OLED_SCL_0    OLED_SCL = 0
     #define OLED_SCL_1    OLED_SCL = 1
     #define OLED_SDA_0    OLED_SDA = 0

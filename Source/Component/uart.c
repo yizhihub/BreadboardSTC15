@@ -275,27 +275,42 @@ unsigned char    GbReportFlg = 0, GbSetupScopeSent = 0, GbBluetoothOK = 0;
 
 void uartAppSendThrot(int16_t sValueRpm)
 {
-    uint8_t cSumCheck = 0, i;
+    uint8_t cSumCheck = 0;
+	uint8_t counter = 1;
     int     qTemp1; 
     
-    GucUartTxBuf[1] = 0x16;   // commander message
-    GucUartTxBuf[2] = 4u;     // length of payload
-    GucUartTxBuf[3] = 1u;     // number of var. to send
-    GucUartTxBuf[4] = 2u;     // size of var.
+    GucUartTxBuf[counter++] = 0x16;   // commander message
+	cSumCheck += GucUartTxBuf[counter - 1];
+	
+    GucUartTxBuf[counter++] = 4u;     // length of payload
+	cSumCheck += GucUartTxBuf[counter - 1];
+	
+    GucUartTxBuf[counter++] = 1u;     // number of var. to send
+	cSumCheck += GucUartTxBuf[counter - 1];
+	
+    GucUartTxBuf[counter++] = 2u;     // size of var.
+	cSumCheck += GucUartTxBuf[counter - 1];
     
     qTemp1 = (int)((float)sValueRpm * RPM2Q15_FACTOR);
     
-    GucUartTxBuf[5] = *((uint8 *)(&qTemp1));
-    GucUartTxBuf[6] = *((uint8 *)(&qTemp1) + 1);
+    GucUartTxBuf[counter++] = *((uint8 *)(&qTemp1));
+	cSumCheck += GucUartTxBuf[counter - 1];
+	if (GucUartTxBuf[counter - 1] == 0x2B)
+	{
+		GucUartTxBuf[counter++] = 0x2B;
+	}
+
+    GucUartTxBuf[counter++] = *((uint8 *)(&qTemp1) + 1);
+    cSumCheck += GucUartTxBuf[counter - 1];
+	if (GucUartTxBuf[counter] == 0x2B)
+	{
+		GucUartTxBuf[counter++] = 0x2B;
+	}
+
+    GucUartTxBuf[counter++] = 0x100 - cSumCheck;
     
-    for (i = 1; i < 7; i++) {
-        cSumCheck += GucUartTxBuf[i];
-    }
     
-    GucUartTxBuf[7] = 0x100 - cSumCheck;
-    
-    
-    uartPutBuf(uart1, GucUartTxBuf, 8);
+    uartPutBuf(uart1, GucUartTxBuf, counter);
 }
 
 void FMSTR_WriteVar16(uint16_t usAddr, int16_t sValue)

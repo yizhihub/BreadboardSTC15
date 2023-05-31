@@ -15,7 +15,7 @@ RTC_Time_s GtTime = {0, 0, 0, 4, 5, 6, 7};
  * int idata Vbg_RAM _at_ 0xef;                    // 程序运行时读取Flash末尾写入idata的bandgap电压值单位mv  测试会有问题
  * Bandgap stored address definition
  */
-#if  (defined(IAP15W413ASDIP28) || defined(IAP15W413ASDIP16))
+#if  (defined(IAP15W413ASDIP28) || defined(IAP15W413ASDIP16) || defined(IAP15W413ASSOP20))
 uint code  Vbg_ROM _at_ 0x33f7;                  /* STC-ISP下载程序时写入Flash末尾的bandgap电压值单位mv   */
 #elif defined(STC15W408ASDIP16)
 uint code  Vbg_ROM _at_ 0x1ff7;                  /* STC-ISP下载程序时写入Flash末尾的bandgap电压值单位mv   */
@@ -45,14 +45,22 @@ uint16_t GVarAddrArray[4][2] =
 
 void port_init(void)
 {
+#if  (defined(IAP15W413ASDIP28) || defined(IAP15W413ASDIP16) || defined(STC15W408ASDIP16))	/*	*/
+	
     P2 = 0xFC;               // 按键配置, 充当接地。
     LED0 = 0;                // P5.5充当OLED的电源地，时钟为低电平。
+#elif  defined(IAP15W413ASSOP20)
+	
+	P1 |= 0x03;				 // 按键配置, 充当接地。
+	P3 |= 0xC0;
+	P3 &= 0xCF;
+#endif
 
 #if defined(PORT_IIC)
     P1M1=0x03;
     P1M0=0x03; // 0000 0011 P1^0 P1^1 set to open drain for  IIC sda scl
 #endif
-    P3M1 = 0x04;
+    P3M1 = 0x00;
     P3M0 = 0x00; // P3^2 set to get Blueteeth's state.
 }
 
@@ -112,8 +120,8 @@ void main(void)
 
 //    OLED_PutStr(0, OLED_LINE0 + (LINE_HEIGHT >> 1), cVerID, 6, 1);
     
-    OLED_Print(0, OLED_LINE1, "当前电压:-----V", BLUE);
-    OLED_Print(0, OLED_LINE2, "当前转速:-----RPM", BLUE);
+    OLED_Print(0, OLED_LINE1, "电   压:-----V", BLUE);
+    OLED_Print(0, OLED_LINE2, "转   速:-----RPM", BLUE);
     OLED_Print(0, OLED_LINE3, "设定转速:-----RPM", BLUE);
     OLED_PutStr(0, OLED_LINE0 + (LINE_HEIGHT >> 1), "Fault:-- Is:---", 6, BLUE);
     

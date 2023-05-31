@@ -3,11 +3,17 @@
 
 #include "common.h"
 
-sbit INDEPKEY1 = P2^5; 
+#if	defined(IAP15W413ASDIP28)
+sbit INDEPKEY1 = P2^5;
 sbit INDEPKEY2 = P2^4;
 sbit INDEPKEY3 = P2^3;
 sbit INDEPKEY4 = P2^2;
-
+#elif (defined(IAP15W413ASSOP20) || defined(STC15W408ASDIP16))
+sbit INDEPKEY1 = P1^1;
+sbit INDEPKEY2 = P1^0;
+sbit INDEPKEY3 = P3^7;
+sbit INDEPKEY4 = P3^6;
+#endif
 
 enum keyn_e
 {
