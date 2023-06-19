@@ -23,6 +23,9 @@
 #elif defined(RT1052)
     #include "fsl_common.h"
     #include "fsl_snvs_hp.h"
+#elif defined(LKS32MC08x)
+    #include "basic.h"
+    #include "hardware_config.h"
 #else
     #include "common.h"
 #endif
@@ -115,7 +118,7 @@
  */
 #define FEATURE_F6x8
 #define FEATURE_F8x16
-#define FEATURE_F16x32
+//#define FEATURE_F16x32
 #define FEATURE_HANZI
 //#define FEATURE_BMP
 
@@ -194,16 +197,52 @@ typedef struct yizhi_RTC_Time_s
     #endif
     
     #elif   defined(OLED_I2C)   
-    
+#if  1
+    #define OLED_SCL         PAout(13)
+    #define OLED_SDA         PAout(14)
+    #define OLED_SDA_R       PAin(14)
+    #define OLED_SDA_IN      {GPIOA->CRH &= 0XF0FFFFFF; GPIOA->CRH |= 8 << 24;}
+    #define OLED_SDA_OUT     {GPIOA->CRH &= 0XF0FFFFFF; GPIOA->CRH |= 3 << 24;}
+#else
     #define OLED_SCL         PBout(6)
     #define OLED_SDA         PBout(7)
     #define OLED_SDA_R       PBin(7)
     #define OLED_SDA_IN      {GPIOB->CRL &= 0X0FFFFFFF; GPIOB->CRL |= 8 << 28;}
     #define OLED_SDA_OUT     {GPIOB->CRL &= 0X0FFFFFFF; GPIOB->CRL |= 3 << 28;}
+
+#endif
     #define OLED_SCL_0   OLED_SCL = 0 //GPIOA->BRR  = 1 << 13
     #define OLED_SCL_1   OLED_SCL = 1 //GPIOA->BSRR = 1 << 13
     #define OLED_SDA_0   OLED_SDA = 0 //GPIOA->BRR  = 1 << 14
     #define OLED_SDA_1   OLED_SDA = 1 //GPIOA->BSRR = 1 << 14
+    #define OLED_CMD  0
+    #define OLED_DATA 1
+    
+    #else 
+    
+    #error "NO OLED INTERFACE DEFINED"
+    
+    #endif   /* #ifdef OLED_SPI */
+#elif defined(LKS32MC08x)
+    #ifdef  OLED_SPI
+    
+    #elif   defined(OLED_I2C)   
+#if  1
+    #define OLED_SDA_R       (GPIO0->PDI & BIT7)
+    #define OLED_SDA_IN      {GPIO0->POE &= ~BIT7; GPIO0->PIE |= BIT7;}
+    #define OLED_SDA_OUT     {GPIO0->PIE &= ~BIT7; GPIO0->POE |= BIT7;}
+#else
+    #define OLED_SCL         PBout(6)
+    #define OLED_SDA         PBout(7)
+    #define OLED_SDA_R       PBin(7)
+    #define OLED_SDA_IN      {GPIOB->CRL &= 0X0FFFFFFF; GPIOB->CRL |= 8 << 28;}
+    #define OLED_SDA_OUT     {GPIOB->CRL &= 0X0FFFFFFF; GPIOB->CRL |= 3 << 28;}
+
+#endif
+    #define OLED_SCL_0    GPIO0->PDO &= ~BIT6
+    #define OLED_SCL_1    GPIO0->PDO |=  BIT6
+    #define OLED_SDA_0    GPIO0->PDO &= ~BIT7
+    #define OLED_SDA_1    GPIO0->PDO |=  BIT7
     #define OLED_CMD  0
     #define OLED_DATA 1
     
