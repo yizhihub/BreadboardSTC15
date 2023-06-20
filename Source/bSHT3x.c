@@ -98,8 +98,8 @@ void SHT3x_Read(int16_t *psTemp, uint8_t *pucHumi)
     msDelay(1);                          // SCL free mesurement ongoing  reference chapter4.3 diagram datasheet
     i2cStart();
     ucResponsStat = i2cWriteByte((SHT3x_ADDRESS << 1) | 0x01);               SHT3x_Debug(ucResponsStat);
-    scl = 1;
-    while(scl == 0);                     // waite the sensor , the sensor will put scl low while measuring.
+    IIC_SCL = 1;
+    while(IIC_SCL == 0);                     // waite the sensor , the sensor will put scl low while measuring.
     usTemperature  = i2cReadByte(1); usTemperature <<= 8;
     usTemperature |= i2cReadByte(1);
     ucCrc[0]      = i2cReadByte(1);

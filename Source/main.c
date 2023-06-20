@@ -120,9 +120,9 @@ void main(void)
 
 //    OLED_PutStr(0, OLED_LINE0 + (LINE_HEIGHT >> 1), cVerID, 6, 1);
     
-    OLED_Print(0, OLED_LINE1, "电   压:-----V", BLUE);
-    OLED_Print(0, OLED_LINE2, "转   速:-----RPM", BLUE);
-    OLED_Print(0, OLED_LINE3, "设定转速:-----RPM", BLUE);
+    OLED_Print(0, OLED_LINE1, "电    压:-----V", BLUE);
+    OLED_Print(0, OLED_LINE2, "转    速:-----RPM", BLUE);
+    OLED_Print(0, OLED_LINE3, "设    定:---- RPM", BLUE);
     OLED_PutStr(0, OLED_LINE0 + (LINE_HEIGHT >> 1), "Fault:-- Is:---", 6, BLUE);
     
     AUXR &= 0x7F;			//定时器时钟12T模式
@@ -156,26 +156,28 @@ void main(void)
                 {
                     case KEY_UP:
                         if (sSpeedSet >= 500 && sSpeedSet < 4500) {
-                            sSpeedSet += 50;
-                            uartAppSendThrot(sSpeedSet);
+                            sSpeedSet += 100;
+                            FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));
+//                            uartAppSendThrot(sSpeedSet);
                             OLED_PutNum(36 + 28, OLED_LINE3, sSpeedSet, 5, 8, RED);
                         }
                         break;
                         
                     case KEY_DOWN:
                         if (sSpeedSet > 500) {
-                            sSpeedSet -= 50;
-                            uartAppSendThrot(sSpeedSet);
+                            sSpeedSet -= 100;
+                            FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));
+//                            uartAppSendThrot(sSpeedSet);
                             OLED_PutNum(36 + 28, OLED_LINE3, sSpeedSet, 5, 8, RED);
                         }
                         break;
                         
                     case KEY_LEFT:
                         
-                        if (sSpeedSet == 0) sSpeedSet = 800;
+                        if (sSpeedSet == 0) sSpeedSet = 1200;
                         else                sSpeedSet = 0;
-/*                        FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));  */
-                        uartAppSendThrot(sSpeedSet);
+                        FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));
+//                        uartAppSendThrot(sSpeedSet);
                         OLED_PutNum(36 + 28, OLED_LINE3, sSpeedSet, 5, 8, RED);
                         break;
                     
@@ -208,10 +210,11 @@ void main(void)
                      */
                     uartAppSetupScope(GVarAddrArray, 4);
                     OLED_PutStr(36, OLED_LINE0, "CONNECTED", 6, GREEN);
-                    sSpeedSet = 800;
+                    sSpeedSet = 1200;
                     OLED_PutNum(36 + 28, OLED_LINE3, sSpeedSet, 5, 8, RED);
                     msDelay(50);
-                    uartAppSendThrot(sSpeedSet);
+                    FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));
+//                    uartAppSendThrot(sSpeedSet);
                     
                     GbSetupScopeSent = 1;
                     GbBluetoothOK    = 1;

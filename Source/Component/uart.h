@@ -4,7 +4,7 @@
 #include "common.h"
 #include "timer.h"
 
-#define REMOTER_FU6812       // REMOTER_FU6832   REMOTER_FU6812
+#define REMOTER_FU6832       // REMOTER_FU6832   REMOTER_FU6812
 
 #if defined(REMOTER_FU6812)
     #define MAX_SPEED_SCALE 5000
