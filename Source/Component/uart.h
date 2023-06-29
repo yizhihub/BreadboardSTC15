@@ -13,13 +13,18 @@
     #define ADDR_SPEEDREF    0x014A
     #define ADDR_BUSVOL      0x001A
     #define ADDR_SPEEDACT    0x002C
+    #define ADDR_IS          0x0044
+    #define ADDR_FAULT       0x007F
+    
 #elif defined(REMOTER_FU6832)
     #define MAX_SPEED_SCALE 7000
-    #define MAX_CURRENT_SCALE 22.0f
+    #define MAX_CURRENT_SCALE 41.6f
     #define MAX_VOLTAG_SCALE (60.0f)
     #define ADDR_SPEEDREF    0x005C
     #define ADDR_BUSVOL      0x0001
     #define ADDR_SPEEDACT    0x001B
+    #define ADDR_IS          0x4092     // ADDR_FOC_IQREF  
+    #define ADDR_FAULT       0x00B6
 #else
     #error "NO REMOTER PLATFORM SELECT"
 #endif

@@ -38,8 +38,8 @@ uint16_t GVarAddrArray[4][2] =
 {
     {ADDR_BUSVOL,   2},
     {ADDR_SPEEDACT, 2},
-    {0x0044,        2},                                                 /* fault.Current.Is*/
-    {0x007F,        1},                                                 /* mcFaultSource   */
+    {ADDR_IS,       2},                                                 /* fault.Current.Is*/
+    {ADDR_FAULT,    1},                                                 /* mcFaultSource   */
 };
 
 
@@ -196,7 +196,7 @@ void main(void)
                 OLED_PutNumber(36 + 28, OLED_LINE1, fVolAct, 3, 1,  0,  8, RED);
                 OLED_PutNum(   36 + 28, OLED_LINE2, sSpdAct, 5, 8, RED);
                 OLED_PutNum(   36,      OLED_LINE0 + (LINE_HEIGHT >> 1), mcFaultSource, 2, 6, GREEN);
-                OLED_PutNumber(72,      OLED_LINE0 + (LINE_HEIGHT >> 1), fIsAct,  1, 1, "A", 6, GREEN); 
+                OLED_PutNumber(72,      OLED_LINE0 + (LINE_HEIGHT >> 1), fIsAct,  2, 1, "A", 6, GREEN); 
            
             } else if (sTimeCnt1++ >= 59 && GbSetupScopeSent) {
                     sTimeCnt1 = 0;
