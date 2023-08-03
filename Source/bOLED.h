@@ -18,6 +18,7 @@
 #if defined(STM32F10X_HD)
     #include "sys.h"
     #include "delay.h"
+    #include "HwDrv.h"
 #elif defined(STM32F10X_MD)
     #include "ZMD_Includes.h"
 #elif defined(RT1052)
@@ -118,7 +119,7 @@
  */
 #define FEATURE_F6x8
 #define FEATURE_F8x16
-//#define FEATURE_F16x32
+#define FEATURE_F16x32
 #define FEATURE_HANZI
 //#define FEATURE_BMP
 
@@ -183,21 +184,39 @@ typedef struct yizhi_RTC_Time_s
 
     #ifdef  OLED_SPI
     
-    #define OLED_SCL  PCout(6)
-    #define OLED_SDA  PBout(0)
-    #define OLED_RST  PBout(2)            /* 在MINISTM32上直接接到了STM32的复位脚！*/
-    #define OLED_DC   PBout(4) 
-    #define OLED_CS   PBout(6)
-    #define OLED_SCL_0    GPIOC->BRR  = 1 << 6// //OLED_SCL = 0
-    #define OLED_SCL_1    GPIOC->BSRR = 1 << 6// //OLED_SCL = 1
-    #define OLED_SDA_0    GPIOB->BRR  = 1 << 0// //OLED_SDA = 0
-    #define OLED_SDA_1    GPIOB->BSRR = 1 << 0// //OLED_SDA = 1
-    #define OLED_RST_0    GPIOB->BRR  = 1 << 2// //OLED_RST = 0
-    #define OLED_RST_1    GPIOB->BSRR = 1 << 2// //OLED_RST = 1
-    #define OLED_DC_0     GPIOB->BRR  = 1 << 4// //OLED_DC  = 0
-    #define OLED_DC_1     GPIOB->BSRR = 1 << 4// //OLED_DC  = 1
-    #define OLED_CS_0     GPIOB->BRR  = 1 << 6// //OLED_CS  = 0
-    #define OLED_CS_1     GPIOB->BSRR = 1 << 6// //OLED_CS  = 1      /* 改为BRR BSRR寄存器 5.5958ms -> 4.4171ms  */
+        #ifdef GD32F30X_HD
+        #define OLED_SCL  PBout(3)
+        #define OLED_SDA  PBout(5)
+        #define OLED_RST  PCout(8)            /* 在MINISTM32上直接接到了STM32的复位脚！*/
+        #define OLED_DC   PCout(9) 
+        #define OLED_CS   PAout(15)
+        #define OLED_SCL_0    GPIOB->BRR  = 1 << 3// //OLED_SCL = 0
+        #define OLED_SCL_1    GPIOB->BSRR = 1 << 3// //OLED_SCL = 1
+        #define OLED_SDA_0    GPIOB->BRR  = 1 << 5// //OLED_SDA = 0
+        #define OLED_SDA_1    GPIOB->BSRR = 1 << 5// //OLED_SDA = 1
+        #define OLED_RST_0    GPIOC->BRR  = 1 << 8// //OLED_RST = 0
+        #define OLED_RST_1    GPIOC->BSRR = 1 << 8// //OLED_RST = 1
+        #define OLED_DC_0     GPIOC->BRR  = 1 << 9// //OLED_DC  = 0
+        #define OLED_DC_1     GPIOC->BSRR = 1 << 9// //OLED_DC  = 1
+        #define OLED_CS_0     GPIOA->BRR  = 1 << 15// //OLED_CS  = 0
+        #define OLED_CS_1     GPIOA->BSRR = 1 << 15// //OLED_CS  = 1      /* 改为BRR BSRR寄存器 5.5958ms -> 4.4171ms  */
+        #else
+        #define OLED_SCL  PCout(6)
+        #define OLED_SDA  PBout(0)
+        #define OLED_RST  PBout(2)            /* 在MINISTM32上直接接到了STM32的复位脚！*/
+        #define OLED_DC   PBout(4) 
+        #define OLED_CS   PBout(6)
+        #define OLED_SCL_0    GPIOC->BRR  = 1 << 6// //OLED_SCL = 0
+        #define OLED_SCL_1    GPIOC->BSRR = 1 << 6// //OLED_SCL = 1
+        #define OLED_SDA_0    GPIOB->BRR  = 1 << 0// //OLED_SDA = 0
+        #define OLED_SDA_1    GPIOB->BSRR = 1 << 0// //OLED_SDA = 1
+        #define OLED_RST_0    GPIOB->BRR  = 1 << 2// //OLED_RST = 0
+        #define OLED_RST_1    GPIOB->BSRR = 1 << 2// //OLED_RST = 1
+        #define OLED_DC_0     GPIOB->BRR  = 1 << 4// //OLED_DC  = 0
+        #define OLED_DC_1     GPIOB->BSRR = 1 << 4// //OLED_DC  = 1
+        #define OLED_CS_0     GPIOB->BRR  = 1 << 6// //OLED_CS  = 0
+        #define OLED_CS_1     GPIOB->BSRR = 1 << 6// //OLED_CS  = 1      /* 改为BRR BSRR寄存器 5.5958ms -> 4.4171ms  */
+        #endif
     #if defined(CHIP_ST7735) || defined(CHIP_ST7789V2) 
     #define LCD_BLK_0     GPIOB->BRR  = 1 << 8
     #define LCD_BLK_1     GPIOB->BSRR = 1 << 8

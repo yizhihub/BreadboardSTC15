@@ -36,9 +36,9 @@
  * slection platfrom header files 
  */
 #if defined(STM32F10X_HD)
-//    #include "sys.h"
-//    #include "delay.h"
-      #include "hard_ware.h"
+    #include "sys.h"
+    #include "delay.h"
+//      #include "hard_ware.h"
 #elif defined(STM32F10X_MD)
     #include "ZMD_Includes.h"
 #elif defined(RT1052)

@@ -417,14 +417,14 @@
               <FilePath>.\Source\bSHT3x.h</FilePath>
             </File>
             <File>
-              <FileName>bSHT3x.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Source\bSHT3x.c</FilePath>
-            </File>
-            <File>
               <FileName>bOLED.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Source\bOLED.h</FilePath>
+            </File>
+            <File>
+              <FileName>bSHT3x.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Source\bSHT3x.c</FilePath>
             </File>
           </Files>
         </Group>
