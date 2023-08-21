@@ -1595,9 +1595,10 @@ void OLED_PutChar(u8 x,u8 y,u8 wan, u8 ucSize, uint16_t ucYn)
     u32 ulTemp[2];
 #else
     u8 i, j, ucTemp;
-    CONST_DATA uint8_t *pucTemp; 
+    uint8_t *pucTemp; 
     ucTemp = ucTemp;
     pucTemp = pucTemp;
+    
 #endif
     
     if(x > (OLED_WIDTH - ucSize))   return; 

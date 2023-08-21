@@ -315,20 +315,42 @@ void uartAppSendThrot(int16_t sValueRpm)
 
 void FMSTR_WriteVar16(uint16_t usAddr, int16_t sValue)
 {
-    uint8_t ucSumCheck = 0, i;
+    uint8_t ucSumCheck = 0, counter = 1;
     
-    GucUartTxBuf[1] = 0xE4;   // commander message
-    GucUartTxBuf[2] = *((uint8_t *)&usAddr);
-    GucUartTxBuf[3] = *((uint8_t *)&usAddr + 1);
-    GucUartTxBuf[4] = *((uint8 *)(&sValue));
-    GucUartTxBuf[5] = *((uint8 *)(&sValue) + 1);
+    GucUartTxBuf[counter] = 0xE4;   // commander message
+    ucSumCheck += GucUartTxBuf[counter++];
     
-    for (i = 1; i < 6; i++) {
-        ucSumCheck += GucUartTxBuf[i];
-    }
-    GucUartTxBuf[6] = 0x100 - ucSumCheck;
+    GucUartTxBuf[counter] = *((uint8_t *)&usAddr);
+    if (GucUartTxBuf[counter] == 0x2B)
+	{
+		GucUartTxBuf[++counter] = 0x2B;
+	}
+    ucSumCheck += GucUartTxBuf[counter++];
     
-    uartPutBuf(uart1, GucUartTxBuf, 7);
+    GucUartTxBuf[counter] = *((uint8_t *)&usAddr + 1);
+    if (GucUartTxBuf[counter] == 0x2B)
+	{
+		GucUartTxBuf[++counter] = 0x2B;
+	}
+    ucSumCheck += GucUartTxBuf[counter++];
+    
+    GucUartTxBuf[counter] = *((uint8 *)(&sValue));
+    if (GucUartTxBuf[counter] == 0x2B)
+	{
+		GucUartTxBuf[++counter] = 0x2B;
+	}
+    ucSumCheck += GucUartTxBuf[counter++];
+    
+    GucUartTxBuf[counter] = *((uint8 *)(&sValue) + 1);
+    if (GucUartTxBuf[counter] == 0x2B)
+	{
+		GucUartTxBuf[++counter] = 0x2B;
+	}
+    ucSumCheck += GucUartTxBuf[counter++];
+
+    GucUartTxBuf[counter++] = 0x100 - ucSumCheck;
+    
+    uartPutBuf(uart1, GucUartTxBuf, counter);
 }
 
 void FMSTR_WriteVar8(uint16_t usAddr, uint8_t ucValue)

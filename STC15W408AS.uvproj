@@ -13,13 +13,13 @@
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
-          <Device>STC15W408AS</Device>
+          <Device>STC15W4K32S4 Series</Device>
           <Vendor>STC</Vendor>
-          <Cpu>IRAM(0-0xFF) XRAM(0-0xFF) IROM(0-0x1FF8) CLOCK(35000000) MODP2</Cpu>
+          <Cpu>IRAM(0-0xFF) XRAM(0-0xEFF) IROM(0-0xEFF8) CLOCK(35000000) MODP2</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile>"LIB\STARTUP.A51" ("Standard 8051 Startup Code")</StartupFile>
           <FlashDriverDll></FlashDriverDll>
-          <DeviceId>62744</DeviceId>
+          <DeviceId>62761</DeviceId>
           <RegisterFile>STC15F2K60S2.H</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
@@ -273,7 +273,7 @@
               <IRO>
                 <Type>1</Type>
                 <StartAddress>0x0</StartAddress>
-                <Size>0x1ff9</Size>
+                <Size>0xeff9</Size>
               </IRO>
               <IRA>
                 <Type>0</Type>
@@ -283,7 +283,7 @@
               <XRA>
                 <Type>0</Type>
                 <StartAddress>0x0</StartAddress>
-                <Size>0x100</Size>
+                <Size>0xf00</Size>
               </XRA>
               <XRA512>
                 <Type>0</Type>
@@ -322,7 +322,7 @@
             <InterruptVectorAddress>0</InterruptVectorAddress>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>C51_PLATEFORM,CHIP_ST7735,OLED_SPI,</Define>
+              <Define>C51_PLATEFORM,CHIP_SH1106,OLED_SPI,</Define>
               <Undefine></Undefine>
               <IncludePath>.\Source;.\Source\Component;.\Source\FMSTR</IncludePath>
             </VariousControls>
@@ -417,14 +417,14 @@
               <FilePath>.\Source\bSHT3x.h</FilePath>
             </File>
             <File>
-              <FileName>bSHT3x.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Source\bSHT3x.c</FilePath>
-            </File>
-            <File>
               <FileName>bOLED.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Source\bOLED.h</FilePath>
+            </File>
+            <File>
+              <FileName>bSHT3x.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Source\bSHT3x.c</FilePath>
             </File>
           </Files>
         </Group>

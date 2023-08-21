@@ -8,7 +8,12 @@
 #include "iic.h"
 #include "freemaster.h"
 
+#if defined(IAP15W4K61S4LQFP44)
+sbit BT_STATE = P5^4;
+#else
 sbit BT_STATE = P3^2;
+#endif
+
 RTC_Time_s GtTime = {0, 0, 0, 4, 5, 6, 7};
 
 /**
@@ -19,11 +24,13 @@ RTC_Time_s GtTime = {0, 0, 0, 4, 5, 6, 7};
 uint code  Vbg_ROM _at_ 0x33f7;                  /* STC-ISP下载程序时写入Flash末尾的bandgap电压值单位mv   */
 #elif defined(STC15W408ASDIP16)
 uint code  Vbg_ROM _at_ 0x1ff7;                  /* STC-ISP下载程序时写入Flash末尾的bandgap电压值单位mv   */
+#elif defined(IAP15W4K61S4LQFP44)
+uint code  Vbg_ROM _at_ 0xf3f7;
 #else 
     #error "NO MCU SELECTED"
 #endif
 
-#define  VER_ID    "=FU6812Remoter230509a"
+#define  VER_ID    "=FU6812Remoter230815a"
 
 char code  pcVerStr1[] = __TIME__;
 char code  pcVerStr2[] = __DATE__;
@@ -156,7 +163,7 @@ void main(void)
                 {
                     case KEY_UP:
                         if (sSpeedSet >= 500 && sSpeedSet < 4500) {
-                            sSpeedSet += 100;
+                            sSpeedSet += 50;
                             FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));
 //                            uartAppSendThrot(sSpeedSet);
                             OLED_PutNum(36 + 28, OLED_LINE3, sSpeedSet, 5, 8, RED);
@@ -165,16 +172,16 @@ void main(void)
                         
                     case KEY_DOWN:
                         if (sSpeedSet > 500) {
-                            sSpeedSet -= 100;
+                            sSpeedSet -= 50;
                             FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));
 //                            uartAppSendThrot(sSpeedSet);
                             OLED_PutNum(36 + 28, OLED_LINE3, sSpeedSet, 5, 8, RED);
                         }
                         break;
                         
-                    case KEY_LEFT:
                         
-                        if (sSpeedSet == 0) sSpeedSet = 1200;
+                    case KEY_LEFT:
+                        if (sSpeedSet == 0) sSpeedSet = 700;
                         else                sSpeedSet = 0;
                         FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));
 //                        uartAppSendThrot(sSpeedSet);
@@ -210,7 +217,7 @@ void main(void)
                      */
                     uartAppSetupScope(GVarAddrArray, 4);
                     OLED_PutStr(36, OLED_LINE0, "CONNECTED", 6, GREEN);
-                    sSpeedSet = 1200;
+                    sSpeedSet = 700;
                     OLED_PutNum(36 + 28, OLED_LINE3, sSpeedSet, 5, 8, RED);
                     msDelay(50);
                     FMSTR_WriteVar16(ADDR_SPEEDREF, (int)((float)sSpeedSet * RPM2Q15_FACTOR));

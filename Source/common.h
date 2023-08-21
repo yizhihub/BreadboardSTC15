@@ -30,6 +30,20 @@ typedef int            int16_t;
 typedef long           int32;
 typedef long           int32_t;
 
+/*********************************************************************************************************
+  通用数据类型重定义
+*********************************************************************************************************/
+typedef unsigned char           BOOL;                                   /* 布尔变量                     */
+typedef unsigned char           INT8U;                                  /* 无符号8位整型变量            */
+typedef signed   char           INT8S;                                  /* 有符号8位整型变量            */
+typedef unsigned short          INT16U;                                 /* 无符号16位整型变量           */
+typedef signed   short          INT16S;                                 /* 有符号16位整型变量           */
+typedef unsigned long           INT32U;                                 /* 无符号32位整型变量           */
+typedef signed   long           INT32S;                                 /* 有符号32位整型变量           */
+//typedef unsigned long long      INT64U;                                 /* 无符号64位整型变量           */
+//typedef signed long long        INT64S;                                 /* 有符号64位整型变量           */
+typedef float                   FP32;                                   /* 单精度浮点数（32位长度）     */
+//typedef double                  FP64;                                   /* 双精度浮点数（64位长度）     */
 
 // 类型重定义 ,兼容振楠FAT文件系统
 
@@ -48,7 +62,7 @@ typedef long           int32_t;
 #define INT32   long 
 
 
-#define IAP15W413ASSOP20    //IAP15W413ASDIP28  IAP15W413ASDIP16 STC15W408ASDIP16  IAP15W413ASSOP20 IAP15W413ASDIP28
+#define IAP15W4K61S4LQFP44    //IAP15W413ASDIP28  IAP15W413ASDIP16 STC15W408ASDIP16  IAP15W413ASSOP20 IAP15W413ASDIP28 IAP15W4K61S4LQFP44
 //#define SENSOR_SHT3x
 //#define SENSOR_HMC5883L
 //#define SENSOR_MPU6500

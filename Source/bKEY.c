@@ -19,11 +19,6 @@
 **
 *********************************************************************************************************/
 #include "bkey.h"
-#include "HwDrv.h"
-#include "stm32f10x_gpio.h"
-#include "stm32f10x_exti.h"
-
-//#include "adc.h"
 
 enum ec11_edge_type {
     A_FALLING = 0,
@@ -167,10 +162,14 @@ KEYn_e ADKey_Scan(void)
 //  else if(ad>500 && ad<650) i=KEY_LEFT;
 //  else if(ad>240 && ad<350) i=KEY_RIGHT;
 //  else if(ad>120 && ad<200) i=KEY_ENTER;
+//  if      (INDEPKEY1 == 0)    i = KEY_UP;
+//  else if (INDEPKEY2 == 0)    i = KEY_DOWN;
+//  else if (INDEPKEY3 == 0)    i = KEY_CANCEL;
+//  else if (INDEPKEY4 == 0)    i = EC11_SET;
   if      (INDEPKEY1 == 0)    i = KEY_UP;
   else if (INDEPKEY2 == 0)    i = KEY_DOWN;
-  else if (INDEPKEY3 == 0)    i = KEY_CANCEL;
-  else if (INDEPKEY4 == 0)    i = EC11_SET;
+  else if (INDEPKEY3 == 0)    i = KEY_LEFT;
+  else if (INDEPKEY4 == 0)    i = KEY_RIGHT;
   else                        i = KEY_NONE;
   return i;
 }
@@ -202,16 +201,16 @@ KEYn_e ADKey_Check(void)
     /* 
      * asume the ec11 is key by yizhi
      */ 
-    else if (GsEc11CntCW)             
-    {
-        GsEc11CntCW--;
-        key = EC11_CW;
-    }
-    else if (GsEc11CntCCW)
-    {
-        GsEc11CntCCW--;
-        key = EC11_CCW;
-    }
+//    else if (GsEc11CntCW)             
+//    {
+//        GsEc11CntCW--;
+//        key = EC11_CW;
+//    }
+//    else if (GsEc11CntCCW)
+//    {
+//        GsEc11CntCCW--;
+//        key = EC11_CCW;
+//    }
     else 
     {
         key=KEY_NONE;
@@ -256,6 +255,8 @@ KEYn_e ADKey_Check2(void)
 *********************************************************************************************************/
 void ec11Scan(INT8U bActionFlg, INT8U ucStepNum)
 {
+      bActionFlg = bActionFlg;
+      ucStepNum  = ucStepNum;
 //    static INT8U bALast, bBLast;
     
 //    if (b) {
@@ -263,13 +264,14 @@ void ec11Scan(INT8U bActionFlg, INT8U ucStepNum)
 //        
 //    }
         
-//    bALast = EC11_A_R;
+//    bALast = EC11_GDA_R;
 //    bBLast = EC11_B_R;
     
     
 }
 
 
+#ifdef GD32F30X_HD
 /**
 ********************************************************************************************************
 ** @nameis ec11Step
@@ -396,3 +398,5 @@ void EXTI1_IRQHandler(void)
 //       }
 //    }
 }
+
+#endif

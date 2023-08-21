@@ -6,6 +6,9 @@
 #include "common.h"
 #elif defined(GD32F30X_HD)
 #include "sys.h"
+#include "HwDrv.h"
+#include "stm32f10x_gpio.h"
+#include "stm32f10x_exti.h"
 #else
 #error "NO PLEATEFORM DEFINED!"
 #endif
@@ -21,6 +24,11 @@ sbit INDEPKEY1 = P1^1;
 sbit INDEPKEY2 = P1^0;
 sbit INDEPKEY3 = P3^7;
 sbit INDEPKEY4 = P3^6;
+#elif defined(IAP15W4K61S4LQFP44)
+sbit INDEPKEY1 = P0^0;
+sbit INDEPKEY2 = P0^1;
+sbit INDEPKEY3 = P0^2;
+sbit INDEPKEY4 = P0^3;
 #elif defined(GD32F30X_HD)
 #define  INDEPKEY1  PCin(0)
 #define  INDEPKEY2  PCin(1)

@@ -162,6 +162,13 @@ typedef struct yizhi_RTC_Time_s
     sbit OLED_DC = P1^5;
     sbit OLED_CS = P1^6;
 	sbit LCD_BLK = P1^7;
+    #elif defined(IAP15W4K61S4LQFP44)
+    sbit OLED_SCL= P1^2;                                                    /* IAP15W4K61S4LQFP44 */
+    sbit OLED_SDA= P1^3;
+    sbit OLED_RST= P1^4;
+    sbit OLED_DC = P1^5;
+    sbit OLED_CS = P1^6;
+	sbit LCD_BLK = P1^7;
     #endif
     
 	#define LCD_BLK_0    LCD_BLK = 0
