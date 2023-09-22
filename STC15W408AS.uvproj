@@ -426,6 +426,11 @@
               <FileType>1</FileType>
               <FilePath>.\Source\bSHT3x.c</FilePath>
             </File>
+            <File>
+              <FileName>ringbuffer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Source\ringbuffer.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

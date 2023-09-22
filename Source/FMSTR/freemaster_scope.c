@@ -26,7 +26,7 @@
 static FMSTR_U8  data pcm_nScopeVarCount;        /* number of active scope variables */
 static FMSTR_ADDR  pcm_pScopeVarAddr[FMSTR_MAX_SCOPE_VARS]; /* addresses of scope variables */
 static FMSTR_SIZE8 pcm_pScopeVarSize[FMSTR_MAX_SCOPE_VARS]; /* sizes of scope variables */
-
+sbit BT_STATE = P2^6;
 /**************************************************************************//*!
 *
 * @brief    Scope Initialization
@@ -170,19 +170,38 @@ FMSTR_BPTR FMSTR_SetThrot(FMSTR_BPTR pMessageIO)
     return pResponse;
 }
 
+extern volatile FMSTR_U8 GucVerIDRxFlg;
+extern char xdata cDataLen;
+extern char xdata cFocVerID[];
 FMSTR_BPTR FMSTR_GetReportData(FMSTR_BPTR pMessageIO)
 {
     FMSTR_BPTR pResponse = pMessageIO;
+    FMSTR_U8 i;
 //    FMSTR_U8 i, sz, nVarCnt;
 
     /* Jump one byte */
     pMessageIO = FMSTR_SkipInBuffer(pMessageIO, 1U);
     
     /* Get report data  */
-    pMessageIO = FMSTR_ValueFromBuffer16(&Gq15ReportData[0], pMessageIO);
-    pMessageIO = FMSTR_ValueFromBuffer16(&Gq15ReportData[1], pMessageIO);
-    pMessageIO = FMSTR_ValueFromBuffer16(&Gq15ReportData[2], pMessageIO);
-    pMessageIO = FMSTR_ValueFromBuffer8(&Gq15ReportData[3], pMessageIO);
+    if (cDataLen == 7)
+    {
+        pMessageIO = FMSTR_ValueFromBuffer16(&Gq15ReportData[0], pMessageIO);
+        pMessageIO = FMSTR_ValueFromBuffer16(&Gq15ReportData[1], pMessageIO);
+        pMessageIO = FMSTR_ValueFromBuffer16(&Gq15ReportData[2], pMessageIO);
+        pMessageIO = FMSTR_ValueFromBuffer8(&Gq15ReportData[3], pMessageIO);
+    }
+    else if (cDataLen == 20)
+    {
+        for (i = 0; i < cDataLen; i++)
+        {
+            pMessageIO = FMSTR_ValueFromBuffer8(&cFocVerID[i], pMessageIO);
+        }
+        GucVerIDRxFlg = 1;
+    }
+//    while (pMessageIO != NULL)
+//    {
+//        BT_STATE = !BT_STATE;
+//    }
     GbReportFlg = 1;
     
 

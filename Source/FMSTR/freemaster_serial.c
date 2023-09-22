@@ -17,6 +17,7 @@
 #include "freemaster_private.h"
 #include "freemaster_protocol.h"
 
+
 #if !(FMSTR_DISABLE)
 #if FMSTR_USE_SERIAL
 
@@ -236,13 +237,13 @@ void FMSTR_ProcessSCI(void)
     {
         /* able to accept another character? */
         // if(!FMSTR_SCI_TXFULL(wSciSR))
-        if (TI)
+        if (S3CON&0x02) //如果是串口1 这里改为TI
         {
             FMSTR_U8 ch;
             /* just put the byte into the SCI transmit buffer */
             if(!FMSTR_Tx(&ch)) {
                 FMSTR_SCI_PUTCHAR((FMSTR_U8) ch);
-                TI = 0;
+                S3CON &= 0xFD; //如果是串口1 这里改为TI = 0
             }
                 
         }
@@ -260,12 +261,12 @@ void FMSTR_ProcessSCI(void)
 #if !FMSTR_SCI_TWOWIRE_ONLY
         /* read-out and ignore any received character (loopback) */
         // if(FMSTR_SCI_RXREADY(wSciSR))
-        if (RI)
+        if (S3CON&0x01) //如果是串口1 这里改为RI
         {
             /*lint -esym(550, nRxChar) */
             volatile FMSTR_U16 nRxChar;
             nRxChar = FMSTR_SCI_GETCHAR(); 
-            RI = 0;
+            S3CON &= 0xFE; //如果是串口1 这里改为RI = 0;
             FMSTR_UNUSED(nRxChar);
         }
 #endif
@@ -275,11 +276,11 @@ void FMSTR_ProcessSCI(void)
     {
         /* data byte received? */
         // if (FMSTR_SCI_RXREADY(wSciSR))
-        if (RI)
+        if (S3CON&0x01) //如果是串口1 这里改为RI
         {
             FMSTR_BCHR nRxChar = 0U;
             nRxChar = (FMSTR_BCHR) FMSTR_SCI_GETCHAR();
-            RI = 0;
+            S3CON &= 0xFE; //如果是串口1 这里改为RI = 0;
 
 #if FMSTR_SHORT_INTR
             FMSTR_RxQueue(nRxChar);
@@ -1194,7 +1195,7 @@ void FMSTR_SendResponse(FMSTR_BPTR pResponse, FMSTR_SIZE8 nLength)
         /* kick on the SCI transmission (also clears TX Empty flag on some platforms) */
         dummySR = FMSTR_SCI_GETSR();
         FMSTR_SCI_PUTCHAR(FMSTR_SOB);
-        TI = 0;
+        S3CON &= 0xFD; //TI = 0;
         FMSTR_UNUSED(dummySR);
     }
     
@@ -1320,7 +1321,7 @@ FMSTR_BOOL FMSTR_Tx(FMSTR_U8* pTxChar)
 * protocol decode routine. 
 *
 ******************************************************************************/
-
+extern char xdata cDataLen;
 FMSTR_BOOL FMSTR_Rx(FMSTR_BCHR nRxChar)
 {
     FMSTR_SERIAL_FLAGS data * pflg = &pcm_wFlags;
@@ -1365,7 +1366,7 @@ FMSTR_BOOL FMSTR_Rx(FMSTR_BCHR nRxChar)
         {
              /* there is no length information in the following report data */
              pflg->flg.bRxMsgLengthNext = 0U;
-             pcm_nRxTodo = 8;                        //  2B 00 AA BB 9B, this byte + data length + checksum
+             pcm_nRxTodo = cDataLen + 1;                 //  2B 00 AA BB 9B, this byte + data length + checksum
         }                                            //  2B 00 0F 15 00 00 00 00 04 D8   不带00 还需要接受8个字节
 
         /* command code stored & processed */

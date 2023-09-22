@@ -11,4 +11,5 @@ extern volatile uchar  IR_Buf[4];
 
 extern volatile uchar  GucT5msFlg;
 extern volatile uchar  GucT1sFlg;
+extern volatile uchar  GucEC11Flg;
 #endif 

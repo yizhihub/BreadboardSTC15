@@ -1528,8 +1528,8 @@ void OLED_Init(void)
 
 //    OLED_WrCmd(0xa6);//--set normal display  待验证可删 SSD1306pass 
 
-    OLED_WrCmd(0xa0);//--Set SEG/Column Mapping     0xa0左右反置 0xa1正常
-    OLED_WrCmd(0xc0);//Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
+    OLED_WrCmd(0xa1);//--Set SEG/Column Mapping     0xa0左右反置 0xa1正常
+    OLED_WrCmd(0xc8);//Set COM/Row Scan Direction   0xc0上下反置 0xc8正常
         
     OLED_WrCmd(0x81);//--set contrast control register
     OLED_WrCmd(Brightness); // Set SEG Output Current Brightness

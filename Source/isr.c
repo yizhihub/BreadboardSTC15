@@ -9,11 +9,13 @@ volatile uchar  IR_OK_Flag=0; // 红外解码正确接收完成标志位
 uchar   IR_buf[4] = {0}; 
 uchar  GucT5msFlg = 0;
 uchar  GucT1sFlg  = 0;
+uchar  GucEC11Flg = 0;
 
 sbit IR_R=P3^3;
 static uint16 idata LowTime,HighTime;
 bit DeCode(void);
 extern RTC_Time_s GtTime;
+sbit EC11_A_R  = P3^5;
 
 void Delay50us()		//@12.000MHz 红外解码专用
 {
@@ -190,6 +192,41 @@ void UART2() interrupt 8
  } */
 }
 
+/***********************************************************************
+#function: 串口3中断处理函数
+#input: none 
+#output: none
+#others:
+#date: 2023-09-14
+#author: song.wj
+************************************************************************/
+void UART3() interrupt 17
+{
+    if (S3CON&0X01)
+    {
+        S3CON &= 0xFE;
+    }
+}
+
+/***********************************************************************
+#function: 外部中断3处理函数
+#input: none 
+#output: none
+#others:
+#date: 2023-09-13
+#author: song.wj
+************************************************************************/
+void ExterInt3() interrupt 11
+{
+    if (EC11_A_R)
+        GucEC11Flg = 1;
+    else
+        GucEC11Flg = 2;
+    
+//    INT_CLKO &= 0xDF;   //如果需要手动清除中断标志位，可先关闭中断
+//                          //此时系统会自动清除内部的中断标志位
+//    INT_CLKO |= 0x20;   //然后再打开中断即可
+}
 
 /****************************红外解码程序***********************/
 //	for(i = 0;i < 4;i++)               //

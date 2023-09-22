@@ -15,6 +15,9 @@
     #define ADDR_SPEEDACT    0x002C
     #define ADDR_IS          0x0044
     #define ADDR_FAULT       0x007F
+    #define ADDR_VERID1      0x00FE
+    #define ADDR_VERID2      0x0115
+    #define ADDR_BUILDT      0x011C
     
 #elif defined(REMOTER_FU6832)
     #define MAX_SPEED_SCALE 7000
@@ -36,6 +39,7 @@ typedef enum UART_yizhi
 	uart0=0,
 	uart1,
 	uart2,
+    uart3,
 	uartMax,
 }Uart_e;
 
@@ -50,6 +54,7 @@ extern unsigned char    GbReportFlg, GbSetupScopeSent, GbBluetoothOK;
 
 void UART1_Init(Timer_e timer_sel); 
 void UART2_Init(void);
+void UART3_Init(void);
 //void UART1Indep_Init(void);
 void uartPutBuf(Uart_e uart,uint8 *buf,uint8 len);
 void  uartPutChar(Uart_e uart,uchar dat);
@@ -62,6 +67,7 @@ void UART_Print(Uart_e uart,char *s,uint m,uint n,uint o,uint32 p);
 void uartAppSendThrot(int16_t sValueRpm);
 void uartAppSetupScope(uint16_t ppAddr[][2], uint8_t ucNum);
 void uartAppReadScope(void);
+void uartppGetVarVal(uint16_t *pAddr);
 void FMSTR_WriteVar16(uint16_t usAddr, int16_t sValue);
 void FMSTR_WriteVar8(uint16_t usAddr,  uint8_t ucValue);
 

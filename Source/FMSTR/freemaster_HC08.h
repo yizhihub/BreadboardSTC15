@@ -334,14 +334,14 @@ void FMSTR_CopyFromBufferWithMask(FMSTR_ADDR nDestAddr, FMSTR_BPTR pSrcBuff, FMS
 // #define FMSTR_SCI_TD() FMSTR_CLRBIT(FMSTR_SCI_BASE, FMSTR_SCICR2_OFFSET, FMSTR_SCICR2_TE)
 #define FMSTR_SCI_TD()
 
-#define FMSTR_SCI_TE_RE() REN = 1
+#define FMSTR_SCI_TE_RE() S3CON |= 0x10 //如果是串口1，则为REN = 1
 
 /* receiver enable/disable */
 // #define FMSTR_SCI_RE() FMSTR_SETBIT(FMSTR_SCI_BASE, FMSTR_SCICR1_OFFSET, FMSTR_SCICR1_ENSCI)
-#define FMSTR_SCI_RE()  REN = 1
+#define FMSTR_SCI_RE()  S3CON |= 0x10  //如果是串口1，则为REN = 1
 
 // #define FMSTR_SCI_RD() FMSTR_CLRBIT(FMSTR_SCI_BASE, FMSTR_SCICR2_OFFSET, FMSTR_SCICR2_RE)
-#define FMSTR_SCI_RD()  REN = 0
+#define FMSTR_SCI_RD()  S3CON &= 0xEF  //如果是串口1，则为REN = 0
 
 /* Transmitter-empty interrupt enable/disable */
 #define FMSTR_SCI_ETXI() //FMSTR_SETBIT(FMSTR_SCI_BASE, FMSTR_SCICR2_OFFSET, FMSTR_SCICR2_SCTIE)
@@ -353,11 +353,11 @@ void FMSTR_CopyFromBufferWithMask(FMSTR_ADDR nDestAddr, FMSTR_BPTR pSrcBuff, FMS
 
 /* Tranmsit character */
 // #define FMSTR_SCI_PUTCHAR(ch) FMSTR_SETREG(FMSTR_SCI_BASE, FMSTR_SCIDR_OFFSET, ch)
-#define FMSTR_SCI_PUTCHAR(ch)   (SBUF = ch)
+#define FMSTR_SCI_PUTCHAR(ch)   (S3BUF = ch) //如果是串口1，则将S3BUF改为SBUF
 
 /* Get received character */
 // #define FMSTR_SCI_GETCHAR() FMSTR_GETREG(FMSTR_SCI_BASE, FMSTR_SCIDR_OFFSET)
-#define FMSTR_SCI_GETCHAR()     SBUF
+#define FMSTR_SCI_GETCHAR()     S3BUF
 
 /* read status register */
 // #define FMSTR_SCI_GETSR()   FMSTR_GETREG(FMSTR_SCI_BASE, FMSTR_SCISR1_OFFSET)

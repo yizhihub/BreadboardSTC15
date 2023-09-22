@@ -81,8 +81,8 @@ void UART1_Init(Timer_e timer_sel)
     {
         AUXR |= 0x04; 
         AUXR |= 0x01;  //定时器 为 1T模式 选择定时器2为baud发生器 
-	T2L = 0xC7;			//设置定时初始值
-	T2H = 0xFE;			//设置定时初始值
+        T2L = 0xC7;			//设置定时初始值
+        T2H = 0xFE;			//设置定时初始值
                               //T2L = 0xCC;T2H = 0xFF; 115200bps@24MHz
                               //           0xE6、0xFF;115200bps@12MHz
                               // C7 FE 19200bps@24MHz
@@ -104,12 +104,33 @@ void UART2_Init(void)
     P_SW2=0x01;  // 管脚设置：RXD:P4^6 TXD:P4^7
     S2CON=0x50; // 工作模式设置 8位可变波特率
     AUXR |=0x04;// T2为1T模式
-    T2L=0xE6; 
-    T2H=0xFF; // 115200bps @12M
+    T2L=0xC7; 
+    T2H=0xFE; // 19200bps @24M
     AUXR |=0x10;//并启动定时器2 
     //IE2=0x01; // 使能 串口2中断
 }
 
+/*********prepare to lanqiao competition*************************
+#function: UART3_Init() 
+#input: none
+#output: none
+#others: refer to IAP15F2K60S2 pdf
+#description: 可选用 T2 或者T3 作为波特率发生器
+#author::  2016-03-16 by'  yizhi 
+******************************************************************/
+void UART3_Init(void)
+{
+    S3CON = 0x10;
+    
+    AUXR |= 0x04; 
+     //定时器 为 1T模式 选择定时器2为baud发生器  AUXR |= 0x01;
+    T2L = 0xC7;			//设置定时初始值
+    T2H = 0xFE;			//设置定时初始值
+                          //T2L = 0xCC;T2H = 0xFF; 115200bps@24MHz
+                          // 0xE6、0xFF;115200bps@12MHz
+                          // 0xC7、0xFE;19200bps@24MHz
+    AUXR |=0x10; // 启动定时器2 
+}
 
 void  uartPutChar(Uart_e uartX,uchar dat)
 {
@@ -133,6 +154,12 @@ void  uartPutChar(Uart_e uartX,uchar dat)
         S2BUF=dat;
         while(!(S2CON&0x02));
         S2CON&=0xfd;
+    }
+    else if(uartX==uart3)
+    {
+        S3BUF=dat;
+        while(!(S3CON&0x02));
+        S3CON&=0xfd;
     }
     else
     {
@@ -309,8 +336,11 @@ void uartAppSendThrot(int16_t sValueRpm)
 
     GucUartTxBuf[counter++] = 0x100 - cSumCheck;
     
-    
+#ifdef IAP15W4K61S4LQFP44
+    uartPutBuf(uart3, GucUartTxBuf, counter);
+#else
     uartPutBuf(uart1, GucUartTxBuf, counter);
+#endif
 }
 
 void FMSTR_WriteVar16(uint16_t usAddr, int16_t sValue)
@@ -350,7 +380,11 @@ void FMSTR_WriteVar16(uint16_t usAddr, int16_t sValue)
 
     GucUartTxBuf[counter++] = 0x100 - ucSumCheck;
     
+#ifdef IAP15W4K61S4LQFP44
+    uartPutBuf(uart3, GucUartTxBuf, counter);
+#else
     uartPutBuf(uart1, GucUartTxBuf, counter);
+#endif
 }
 
 void FMSTR_WriteVar8(uint16_t usAddr, uint8_t ucValue)
@@ -368,7 +402,12 @@ void FMSTR_WriteVar8(uint16_t usAddr, uint8_t ucValue)
     }
     GucUartTxBuf[6] = 0x100 - ucSumCheck;
     
+
+#ifdef IAP15W4K61S4LQFP44
+    uartPutBuf(uart3, GucUartTxBuf, 7);
+#else
     uartPutBuf(uart1, GucUartTxBuf, 7);
+#endif
 }
 /**
 *********************************************************************************************************
@@ -400,7 +439,12 @@ void uartAppSetupScope(uint16_t ppAddr[][2], uint8_t ucNum)
     }
     GucUartTxBuf[j] = 0x100 - ucSumCheck;   // checksum 
     
-    uartPutBuf(uart1, GucUartTxBuf, j + 1);    // PS 其实这几个App函数可以借助FreeMaster的协议层发送，协议层每个循环发送一个字节更合理。
+
+#ifdef IAP15W4K61S4LQFP44
+    uartPutBuf(uart3, GucUartTxBuf, j + 1);
+#else
+    uartPutBuf(uart1, GucUartTxBuf, j + 1);// PS 其实这几个App函数可以借助FreeMaster的协议层发送，协议层每个循环发送一个字节更合理。
+#endif
 }
 
 void uartAppReadScope(void)
@@ -408,7 +452,46 @@ void uartAppReadScope(void)
     GucUartTxBuf[1] = 0xC5;   // commander message
     GucUartTxBuf[2] = 0x3B;   // checksum
     
+#ifdef IAP15W4K61S4LQFP44
+    uartPutBuf(uart3, GucUartTxBuf, 3);
+#else
     uartPutBuf(uart1, GucUartTxBuf, 3);
+#endif
+}
+
+/**
+*********************************************************************************************************
+** @nameis uartAppGetVarVal
+** @effect 获取变量指令
+** @import pAddr 要获取变量的地址，ucNum 变量的大小
+** @export none
+** @return none
+** @create song.wj 2023.09.15
+** @modify  
+*********************************************************************************************************/
+void uartppGetVarVal(uint16_t *pAddr)
+{
+    uint8_t i, j = 1, ucSumCheck = 0;
+    
+    GucUartTxBuf[j++] = 0x01;   // commander message
+    GucUartTxBuf[j++] = 0x03;   // length of payload    
+        
+    GucUartTxBuf[j++] = *((uint8_t *)pAddr + 3);   // size of var1 
+    GucUartTxBuf[j++] = *((uint8_t *)pAddr);
+    GucUartTxBuf[j++] = *((uint8_t *)pAddr + 1);
+    
+    
+    for (i = 1; i < j; i++) {
+        ucSumCheck += GucUartTxBuf[i];
+    }
+    GucUartTxBuf[j] = 0x100 - ucSumCheck;   // checksum 
+    
+
+#ifdef IAP15W4K61S4LQFP44
+    uartPutBuf(uart3, GucUartTxBuf, j + 1);
+#else
+    uartPutBuf(uart1, GucUartTxBuf, j + 1);// PS 其实这几个App函数可以借助FreeMaster的协议层发送，协议层每个循环发送一个字节更合理。
+#endif
 }
 
 // 串口的队列思想 
